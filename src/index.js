@@ -1,17 +1,24 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import Notfound from './Views/Notfound.jsx';
+import Employee from './Views/employee/Employee.jsx';
+import EmployeeAdd from './Views/employee/Add.jsx'
+import EmployeeEdit from './Views/employee/Edit.jsx'
+import Noshow from './Views/Noshow.jsx'
+import Workedtime from './Views/workedtime/Workedtime.jsx'
+import { BrowserRouter, Routes, Route } from "react-router";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <BrowserRouter>
+    <Routes>
+      <Route path="/employee" element={<Employee />}></Route>
+      <Route path="/employee/add" element={<EmployeeAdd />}></Route>
+      <Route path="/employee/edit/:id" element={<EmployeeEdit />} />
+      <Route path="/noshow" element={<Noshow />}></Route>
+      <Route path="/workedtime" element={<Workedtime />}></Route>
+      <Route path="*" element={<Notfound />}></Route>
+    </Routes>
+  </BrowserRouter>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
