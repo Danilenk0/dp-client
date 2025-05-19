@@ -19,20 +19,12 @@ export default function Navbar() {
             Сотрудники
           </Link>
           <Link
-            to="/noshow"
+            to="/calendar"
             className={`text-sm font-semibold text-gray-900 pb-2 ${
-              pathSegment == "noshow" ? "border-b-3 border-indigo-600" : ""
+              pathSegment == "calendar" ? "border-b-3 border-indigo-600" : ""
             }`}
           >
-            Неявки
-          </Link>
-          <Link
-            to="/workedtime"
-            className={`text-sm font-semibold text-gray-900 pb-2 ${
-              pathSegment == "workedtime" ? "border-b-3 border-indigo-600" : ""
-            }`}
-          >
-            Рабочее время
+           Календарь
           </Link>
         </div>
       </nav>
