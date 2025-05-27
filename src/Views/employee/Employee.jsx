@@ -1,7 +1,7 @@
 import Navbar from "../../Components/Navbar.jsx";
 import Loader from "../../Components/Loader.jsx";
 import Alert from "../../Components/Alert.jsx";
-import EmployeeFilter from "../../Components/EmployeeFilter.jsx";
+import FilterMenu from "../../Components/FilterMenu.jsx";
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import axios from "axios";
@@ -120,7 +120,6 @@ function Employee() {
         }
       });
     } else if (marker == 'Должность') {
-      console.log(selectedPositions)
       setSelectedPositions((prevSelected) => {
         if (prevSelected.includes(id)) {
           return prevSelected.filter((posId) => posId !== id);
@@ -181,18 +180,18 @@ function Employee() {
                       <i class="bx bx-plus text-[20px]"></i>
                       <p>Создать</p>
                     </Link>
-                    <EmployeeFilter
+                    <FilterMenu
                       data={departments}
                       handleCheckboxChange={handleCheckboxChange}
                     >
                       Отдел
-                    </EmployeeFilter>
-                    <EmployeeFilter
+                    </FilterMenu>
+                    <FilterMenu
                       data={positions}
                       handleCheckboxChange={handleCheckboxChange}
                     >
                       Должность
-                    </EmployeeFilter>
+                    </FilterMenu>
                   </div>
                 </div>
                 {data.length === 0 ? (

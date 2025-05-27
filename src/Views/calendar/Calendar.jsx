@@ -1,13 +1,14 @@
 import Navbar from "../../Components/Navbar.jsx";
+import Alert from "../../Components/Alert.jsx";
+import ModalAddWorkedtime from "../calendar/ModalAddWorkedtime.jsx";
+import ControlCalendarBlock from "../../Components/ControlCalendarBlock.jsx";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import Alert from "../../Components/Alert.jsx";
-import ModalAddWorkedtime from '../calendar/ModalAddWorkedtime.jsx'
 
 export default function Calendar() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [calendar, setCalendar] = useState(Array(42).fill(0));
+  const [calendarNumbers, setCalendarNumbers] = useState(Array(42).fill(0));
   const [selectedDay, setSelectedDay] = useState({
     start: null,
     end: null,
@@ -18,21 +19,25 @@ export default function Calendar() {
   });
   const [workedtimes, setWorkedtimes] = useState([]);
   const [filteredWorkedtimes, setFilteredWorkedtimes] = useState([]);
+  const [outputWorkedtimes, setOutputWorkedtimes] = useState({});
   const [employees, setEmployees] = useState([]);
-  const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] = useState(false)
-
+  const [positions, setPositions] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] = useState(false);
+  const [searchWorkedtimeString, setSearchWorkedtimeString] = useState('');
   useEffect(() => {
-    
     feactData();
   }, []);
+
   useEffect(() => {
     const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
     const startDay = new Date(selectedYear, selectedMonth - 1, 1).getDay();
     const adjustedStartDay = (startDay + 6) % 7;
 
     const monthArray = generateMonthArray(adjustedStartDay, daysInMonth);
-    setCalendar(monthArray);
+    setCalendarNumbers(monthArray);
   }, [selectedMonth, selectedYear]);
+
   useEffect(() => {
     if (!selectedDay.end) {
       const date = new Date(
@@ -42,7 +47,7 @@ export default function Calendar() {
       setFilteredWorkedtimes(
         workedtimes.filter((item) => {
           const itemDate = new Date(item.date);
-          return itemDate.getTime() === date.getTime(); // Сравниваем по времени
+          return itemDate.getTime() === date.getTime();
         })
       );
     } else {
@@ -60,9 +65,54 @@ export default function Calendar() {
         })
       );
     }
-  }, [selectedYear, selectedMonth, selectedDay, workedtimes]);
+    if (searchWorkedtimeString) {
+      setFilteredWorkedtimes(
+        filteredWorkedtimes.filter(
+          (item) =>
+            item.employee_id.firstName
+              .toLowerCase()
+              .includes(searchWorkedtimeString.toLowerCase()) ||
+            item.employee_id.lastName
+              .toLowerCase()
+              .includes(searchWorkedtimeString.toLowerCase()) ||
+            item.employee_id.surname
+              .toLowerCase()
+              .includes(searchWorkedtimeString.toLowerCase()) ||
+            item.employee_id.position_id.name
+              .toLowerCase()
+              .includes(searchWorkedtimeString.toLowerCase()) ||
+            item.employee_id.department_id.name
+              .toLowerCase()
+              .includes(searchWorkedtimeString.toLowerCase()) 
+        )
+      ); 
+    }
+  console.log(filteredWorkedtimes)
+  }, [selectedYear, selectedMonth, selectedDay,searchWorkedtimeString, workedtimes]);
 
-  async function feactData () {
+  useEffect(() => {
+    const newWorkedtimeOutputData = {};
+    if (!selectedDay.end) {
+      setOutputWorkedtimes({
+        [selectedYear + "-" + selectedMonth + "-" + selectedDay.start]:
+          filteredWorkedtimes,
+      });
+    } else {
+      for (let i = selectedDay.start; i <= selectedDay.end; i++) {
+        newWorkedtimeOutputData[selectedYear + "-" + selectedMonth + "-" + i] =
+          filteredWorkedtimes.filter((item) =>
+            isSameDate(
+              new Date(item.date),
+              new Date(Date.UTC(selectedYear, selectedMonth - 1, i))
+            )
+          );
+      }
+      setOutputWorkedtimes(newWorkedtimeOutputData);
+    }
+    console.log(outputWorkedtimes);
+  }, [filteredWorkedtimes]);
+  
+  async function feactData() {
     try {
       const responseWorkedtimes = await axios.get(
         "http://localhost:5050/workedtime"
@@ -72,13 +122,23 @@ export default function Calendar() {
         "http://localhost:5050/employee"
       );
       setEmployees(responseemployees.data);
+
+      const responsePositions = await axios.get(
+        "http://localhost:5050/position"
+      );
+      setPositions(responsePositions.data);
+
+      const responseDepartments = await axios.get(
+        "http://localhost:5050/department"
+      );
+      setDepartments(responseDepartments.data);
     } catch (error) {
       setAlertData({
         type: "error",
         message: error.message,
       });
     }
-  };
+  }
   function generateMonthArray(startDay, daysInMonth) {
     const totalDays = 42;
     const monthArray = Array(totalDays).fill(0);
@@ -92,6 +152,13 @@ export default function Calendar() {
 
     return monthArray;
   }
+  function isSameDate(date1, date2) {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  }
 
   function handleSelectMonth(marker) {
     if (marker == "+" && selectedMonth < 12) {
@@ -103,9 +170,9 @@ export default function Calendar() {
     } else setSelectedMonth(12);
   }
   function handleSelectYear(marker) {
-    if (marker == "+") {
+    if (marker == "+" && selectedYear != 2025) {
       setSelectedYear(selectedYear + 1);
-    } else if (marker == "-" && selectedYear != 2025) {
+    } else if (marker == "-") {
       setSelectedYear(selectedYear - 1);
     }
   }
@@ -209,6 +276,11 @@ export default function Calendar() {
     }
   }
 
+  function handleFilterCheckboxChange() { }
+  function handleDeleteWorkedtimeData() { }
+  
+  function handleShowEditWorkedtieModal(){}
+
   return (
     <>
       <ModalAddWorkedtime
@@ -224,138 +296,20 @@ export default function Calendar() {
       <Alert alertData={alertData} setAlertData={setAlertData} />
       <Navbar />
       <main className="flex overflow-y-hidden">
-        <section
-          className={`min-w-150 rounded-xs border-gray-100 border bg-gray-100 p-1 flex flex-col transition max-h-162 pb-10 ${
-            selectedDay.start ? "" : "hidden"
-          }`}
-        >
-          <header className="flex items-center justify-between p-2.5 bg-white rounded-md shadow-sm mb-2">
-            <p className="font-semibold leading-6 text-gray-900">
-              {new Date(2023, selectedMonth - 1).toLocaleString("ru-RU", {
-                month: "long",
-              })}{" "}
-              {selectedDay.start && !selectedDay.end
-                ? selectedDay.start
-                : selectedDay.start + " - " + selectedDay.end}
-            </p>
-            <form className="w-100 mx-auto">
-              <div>
-                <div class="relative">
-                  <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                    <i class="bx bx-search"></i>
-                  </div>
-                  <input
-                    type="text"
-                    class="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
-                    placeholder="Поиск сотрудника"
-                  />
-                </div>
-              </div>
-            </form>
-            <button
-              className="text-gray-400 bg-transparent hover:bg-gray-100 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center transition duration-200"
-              onClick={() => {
-                setSelectedDay({ start: null, end: null });
-              }}
-            >
-              <i class="bx bx-x text-[20px]"></i>
-            </button>
-          </header>
-          <main className="flex gap-1 h-full ">
-            <div className="bg-white p-2.5 shadow-sm flex flex-col gap-1 rounded-md">
-              <button
-                type="button"
-                className="rounded-md bg-indigo-600 px-3 py-2 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition duration-200"
-              >
-                <i class="bx bx-laptop text-white"></i>
-              </button>
-              <button
-                type="button"
-                className="rounded-md bg-indigo-600 px-3 py-2 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition duration-200"
-              >
-                <i class="bx bx-home  text-white"></i>
-              </button>
-            </div>
-            <div className="bg-white p-2.5 shadow-sm  flex-grow rounded-md overflow-y-scroll h-147">
-              <header className="p-2.5 rounded-md border border-gray-200 shadow-sm mb-2.5 flex gap-2.5 flex justify-between">
-                <div className="flex gap-2.5">
-                  <button
-                    id="filterDropdownButton"
-                    data-dropdown-toggle="filterDropdown"
-                    className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 transition duration-200"
-                    type="button"
-                  >
-                    <i class="bx bx-filter-alt me-1"></i>
-                    Отдел
-                    <i class="bx bx-chevron-down text-[20px] ms-3"></i>
-                  </button>
-                  <button
-                    id="filterDropdownButton"
-                    data-dropdown-toggle="filterDropdown"
-                    className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 transition duration-200"
-                    type="button"
-                  >
-                    <i class="bx bx-filter-alt me-1"></i>
-                    Должность
-                    <i class="bx bx-chevron-down text-[20px] ms-3"></i>
-                  </button>
-                </div>
-                <button
-                  onClick={() => setIsShowAddWorkedtimeModal(true)}
-                  type="button"
-                  className="rounded-md bg-indigo-600 px-3 py-1 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition duration-200"
-                >
-                  <i class="bx bx-plus text-white"></i>
-                </button>
-              </header>
-              <ul>
-                {filteredWorkedtimes.map((item) => {
-                  return (
-                    <li
-                      key={item._id}
-                      className="p-2.5 rounded-md border border-gray-200 font-semibold shadow-sm mb-2.5"
-                    >
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-2">
-                          <p className="text-gray-900">
-                            {item.employee_id.lastName +
-                              " " +
-                              item.employee_id.firstName +
-                              " " +
-                              item.employee_id.surname}
-                          </p>
-                          <p>{new Date(item.date).toLocaleDateString()}</p>
-                          <p>
-                            {item.time}{" "}
-                            {item.time == 1
-                              ? "час"
-                              : item.time > 1 && item.time < 5
-                              ? "часа"
-                              : "часов"}
-                          </p>
-                        </div>
-                        <div>
-                          <button className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center">
-                            <i class="bx bx-dots-horizontal-rounded text-[20px]  "></i>
-                          </button>
-                        </div>
-                      </div>
-                      <hr className="h-px my-1 bg-gray-200 border-0" />
-                      <div className="flex flex-col">
-                        <p className="text-gray-500 text-[10px]">
-                          Отдел: {item.employee_id.department_id.name}
-                        </p>
-                        <p className="text-gray-500 text-[10px]">
-                          Должность: {item.employee_id.position_id.name}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </main>
-        </section>
+        <ControlCalendarBlock
+          selectedDay={selectedDay}
+          selectedMonth={selectedMonth}
+          setSelectedDay={setSelectedDay}
+          positions={positions}
+          departments={departments}
+          handleFilterCheckboxChange={handleFilterCheckboxChange}
+          outputWorkedtimes={outputWorkedtimes}
+          setIsShowAddWorkedtimeModal={setIsShowAddWorkedtimeModal}
+          handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
+          handleShowEditWorkedtieModal={handleShowEditWorkedtieModal}
+          searchWorkedtimeString={searchWorkedtimeString}
+          setSearchWorkedtimeString={setSearchWorkedtimeString}
+        ></ControlCalendarBlock>
         <div className="lg:flex lg:h-full w-full lg:flex-col mt-1">
           <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 lg:flex-none">
             <h1 className="text-base font-semibold leading-6 text-gray-900">
@@ -437,7 +391,7 @@ export default function Calendar() {
             </div>
             <div className="flex bg-gray-200 text-xs leading-6 text-gray-700 lg:flex-auto">
               <div className="hidden w-full lg:grid lg:grid-cols-7 lg:grid-rows-6 lg:gap-px">
-                {calendar.map((item, index) => {
+                {calendarNumbers.map((item, index) => {
                   return (
                     <div
                       onClick={() => (item != 0 ? handleSelectDay(item) : "")}
