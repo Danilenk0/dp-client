@@ -22,9 +22,14 @@ export default function Calendar() {
   const [outputWorkedtimes, setOutputWorkedtimes] = useState({});
   const [employees, setEmployees] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [selectedPositions, setSelectedPositions] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] = useState(false);
-  const [searchWorkedtimeString, setSearchWorkedtimeString] = useState('');
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] =
+    useState(false);
+  const [isShowEditWorkedtimeModa, setIsShowEditWorkedtimeModal] = useState(false)
+  const [searchWorkedtimeString, setSearchWorkedtimeString] = useState("");
+  const [itemMenuId, setItemMenuId] = useState();
   useEffect(() => {
     feactData();
   }, []);
@@ -39,57 +44,66 @@ export default function Calendar() {
   }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
-    if (!selectedDay.end) {
-      const date = new Date(
-        Date.UTC(selectedYear, selectedMonth - 1, selectedDay.start)
-      );
+    let filteredData = [...workedtimes];
 
-      setFilteredWorkedtimes(
-        workedtimes.filter((item) => {
-          const itemDate = new Date(item.date);
-          return itemDate.getTime() === date.getTime();
-        })
-      );
-    } else {
+    if (selectedDay.start) {
       const startDate = new Date(
         Date.UTC(selectedYear, selectedMonth - 1, selectedDay.start)
       );
-      const endDate = new Date(
-        Date.UTC(selectedYear, selectedMonth - 1, selectedDay.end)
-      );
+      const endDate = selectedDay.end
+        ? new Date(Date.UTC(selectedYear, selectedMonth - 1, selectedDay.end))
+        : startDate;
 
-      setFilteredWorkedtimes(
-        workedtimes.filter((item) => {
-          const itemDate = new Date(item.date);
-          return itemDate >= startDate && itemDate <= endDate;
-        })
-      );
+      filteredData = filteredData.filter((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
     }
+
     if (searchWorkedtimeString) {
-      setFilteredWorkedtimes(
-        filteredWorkedtimes.filter(
-          (item) =>
-            item.employee_id.firstName
-              .toLowerCase()
-              .includes(searchWorkedtimeString.toLowerCase()) ||
-            item.employee_id.lastName
-              .toLowerCase()
-              .includes(searchWorkedtimeString.toLowerCase()) ||
-            item.employee_id.surname
-              .toLowerCase()
-              .includes(searchWorkedtimeString.toLowerCase()) ||
-            item.employee_id.position_id.name
-              .toLowerCase()
-              .includes(searchWorkedtimeString.toLowerCase()) ||
-            item.employee_id.department_id.name
-              .toLowerCase()
-              .includes(searchWorkedtimeString.toLowerCase()) 
-        )
-      ); 
+      filteredData = filteredData.filter(
+        (item) =>
+          item.employee_id.firstName
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.employee_id.lastName
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.employee_id.surname
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.employee_id.position_id.name
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.employee_id.department_id.name
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase())
+      );
     }
-  console.log(filteredWorkedtimes)
-  }, [selectedYear, selectedMonth, selectedDay,searchWorkedtimeString, workedtimes]);
 
+    if (selectedDepartments.length > 0) {
+      filteredData = filteredData.filter(({ employee_id }) =>
+        selectedDepartments.includes(employee_id.department_id._id)
+      );
+    }
+
+    if (selectedPositions.length > 0) {
+      filteredData = filteredData.filter(({ employee_id }) =>
+        selectedPositions.includes(employee_id.position_id._id)
+      );
+    }
+
+    setFilteredWorkedtimes(filteredData);
+  }, [
+    selectedYear,
+    selectedMonth,
+    selectedDay.start,
+    selectedDay.end,
+    searchWorkedtimeString,
+    selectedDepartments,
+    selectedPositions,
+    workedtimes,
+  ]);
   useEffect(() => {
     const newWorkedtimeOutputData = {};
     if (!selectedDay.end) {
@@ -109,9 +123,8 @@ export default function Calendar() {
       }
       setOutputWorkedtimes(newWorkedtimeOutputData);
     }
-    console.log(outputWorkedtimes);
   }, [filteredWorkedtimes]);
-  
+
   async function feactData() {
     try {
       const responseWorkedtimes = await axios.get(
@@ -159,7 +172,11 @@ export default function Calendar() {
       date1.getDate() === date2.getDate()
     );
   }
-
+  function clearAllFilter() {
+    setSelectedDepartments([]);
+    setSelectedPositions([]);
+    setSearchWorkedtimeString("");
+  }
   function handleSelectMonth(marker) {
     if (marker == "+" && selectedMonth < 12) {
       setSelectedMonth(selectedMonth + 1);
@@ -276,10 +293,47 @@ export default function Calendar() {
     }
   }
 
-  function handleFilterCheckboxChange() { }
-  function handleDeleteWorkedtimeData() { }
-  
-  function handleShowEditWorkedtieModal(){}
+  function handleFilterCheckboxChange(id, marker) {
+    if (marker == "Отдел") {
+      setSelectedDepartments((prevSelected) => {
+        if (prevSelected.includes(id)) {
+          return prevSelected.filter((deptId) => deptId !== id);
+        } else {
+          return [...prevSelected, id];
+        }
+      });
+    } else if (marker == "Должность") {
+      setSelectedPositions((prevSelected) => {
+        if (prevSelected.includes(id)) {
+          return prevSelected.filter((posId) => posId !== id);
+        } else {
+          return [...prevSelected, id];
+        }
+      });
+    }
+  }
+  function handleShowItemMenu(id) {
+    setItemMenuId(itemMenuId == id ? null : id);
+  }
+  async function handleDeleteWorkedtimeData(id) {
+    try {
+      await axios.delete(
+        `http://localhost:5050/workedtime/${id}`
+      );
+      setAlertData({
+        type: "success",
+        message: "Рабочее время успешно удалено",
+      });
+      feactData();
+    } catch (error) {
+      setAlertData({
+        type: "error",
+        message: error.message,
+      });
+    }
+  }
+
+  function handleShowEditWorkedtieModal() {}
 
   return (
     <>
@@ -309,6 +363,12 @@ export default function Calendar() {
           handleShowEditWorkedtieModal={handleShowEditWorkedtieModal}
           searchWorkedtimeString={searchWorkedtimeString}
           setSearchWorkedtimeString={setSearchWorkedtimeString}
+          clearAllFilter={clearAllFilter}
+          selectedDepartments={selectedDepartments}
+          selectedPositions={selectedPositions}
+          handleShowItemMenu={handleShowItemMenu}
+          itemMenuId={itemMenuId}
+          setItemMenuId={setItemMenuId}
         ></ControlCalendarBlock>
         <div className="lg:flex lg:h-full w-full lg:flex-col mt-1">
           <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 lg:flex-none">

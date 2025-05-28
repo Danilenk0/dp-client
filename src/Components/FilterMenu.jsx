@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef} from 'react'
 
-export default function ({ data, handleCheckboxChange, children }) {
+export default function ({ data, handleCheckboxChange, selectedDepartments,selectedPositions, children }) {
     const [isShowFilter, setIsShowFilter] = useState(false);
   const filterRef = useRef(null);
 
@@ -48,6 +48,10 @@ export default function ({ data, handleCheckboxChange, children }) {
               <input
                 id={`department-${item._id}`}
                 type="checkbox"
+                checked={
+                  (selectedDepartments && selectedDepartments.includes(item._id)) ||
+                  (selectedPositions && selectedPositions.includes(item._id))
+                }
                 value=""
                 className="min-w-4 min-h-4 bg-gray-100 border-gray-300 rounded-sm text-primary-600 focus:ring-primary-500"
                 onChange={() =>
