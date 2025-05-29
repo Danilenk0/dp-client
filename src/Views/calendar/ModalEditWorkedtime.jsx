@@ -4,8 +4,8 @@ import AlertValidation from "../../Components/AlertValidation.jsx";
 
 export default function ModalEditWorkedtime({
   isShowModal,
-  selectedWorkedtimeId,
-  setSelectedWorkedtimeId,
+  id,
+  setId,
   setAlertData,
   setIsShowEditWorkedtimeModal,
   feactData,
@@ -15,10 +15,10 @@ export default function ModalEditWorkedtime({
   const [validationErrors, setValidationErrors] = useState([]);
 
   useEffect(() => {
-    if (selectedWorkedtimeId) {
+    if (id) {
       fetchData();
     }
-  }, [selectedWorkedtimeId]);
+  }, [id]);
   useEffect(() => {
     setSelectValue(workedtime.time);
   }, [workedtime]);
@@ -26,7 +26,7 @@ export default function ModalEditWorkedtime({
   async function fetchData() {
     try {
       const response = await axios.get(
-        `http://localhost:5050/workedtime/${selectedWorkedtimeId}`
+        `http://localhost:5050/workedtime/${id}`
       );
       setWorkedtime(response.data);
     } catch (error) {
@@ -81,7 +81,10 @@ export default function ModalEditWorkedtime({
           <div className="relative bg-white rounded-lg shadow-2xl p-2.5">
             <div className="flex items-center justify-between pe-0.5 pt-0.5 pb-0.5 border-b rounded-t dark:border-gray-600 border-gray-200">
               <button
-                onClick={() => setIsShowEditWorkedtimeModal(false)}
+                onClick={() => {
+                  setIsShowEditWorkedtimeModal(false)
+                  setId();
+                }}
                 type="button"
                 className="text-gray-400 bg-transparent hover:bg-gray-100 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center transition duration-200"
               >
@@ -133,6 +136,7 @@ export default function ModalEditWorkedtime({
                 onClick={() => {
                   setIsShowEditWorkedtimeModal(false);
                   handleUpdateData();
+                  setId();
                 }}
                 type="button"
                 className="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition duration-200"
@@ -140,7 +144,10 @@ export default function ModalEditWorkedtime({
                 Сохранить
               </button>
               <button
-                onClick={() => setIsShowEditWorkedtimeModal(false)}
+                onClick={() => {
+                  setIsShowEditWorkedtimeModal(false)
+                  setId();
+                }}
                 type="button"
                 className="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-indigo-600 focus:z-10 focus:ring-4 focus:ring-gray-100 transition duration-200"
               >

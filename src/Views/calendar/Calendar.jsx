@@ -19,23 +19,15 @@ export default function Calendar() {
     message: "",
   });
   const [workedtimes, setWorkedtimes] = useState([]);
-  const [filteredWorkedtimes, setFilteredWorkedtimes] = useState([]);
-  const [outputWorkedtimes, setOutputWorkedtimes] = useState({});
-  const [selectedWorkedtimeId, setSelectedWorkedtimeId] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [positions, setPositions] = useState([]);
-  const [selectedPositions, setSelectedPositions] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] =
-    useState(false);
-  const [isShowEditWorkedtimeModal, setIsShowEditWorkedtimeModal] = useState(false)
-  const [searchWorkedtimeString, setSearchWorkedtimeString] = useState("");
   
+  //для получения данных с сервера
   useEffect(() => {
     feactData();
   }, []);
-
+  //для генерации массива чисел календаря
   useEffect(() => {
     const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
     const startDay = new Date(selectedYear, selectedMonth - 1, 1).getDay();
@@ -43,89 +35,7 @@ export default function Calendar() {
 
     const monthArray = generateMonthArray(adjustedStartDay, daysInMonth);
     setCalendarNumbers(monthArray);
-  }, [selectedMonth, selectedYear]);
-
-  useEffect(() => {
-    let filteredData = [...workedtimes];
-
-    if (selectedDay.start) {
-      const startDate = new Date(
-        Date.UTC(selectedYear, selectedMonth - 1, selectedDay.start)
-      );
-      const endDate = selectedDay.end
-        ? new Date(Date.UTC(selectedYear, selectedMonth - 1, selectedDay.end))
-        : startDate;
-
-      filteredData = filteredData.filter((item) => {
-        const itemDate = new Date(item.date);
-        return itemDate >= startDate && itemDate <= endDate;
-      });
-    }
-
-    if (searchWorkedtimeString) {
-      filteredData = filteredData.filter(
-        (item) =>
-          item.employee_id.firstName
-            .toLowerCase()
-            .includes(searchWorkedtimeString.toLowerCase()) ||
-          item.employee_id.lastName
-            .toLowerCase()
-            .includes(searchWorkedtimeString.toLowerCase()) ||
-          item.employee_id.surname
-            .toLowerCase()
-            .includes(searchWorkedtimeString.toLowerCase()) ||
-          item.employee_id.position_id.name
-            .toLowerCase()
-            .includes(searchWorkedtimeString.toLowerCase()) ||
-          item.employee_id.department_id.name
-            .toLowerCase()
-            .includes(searchWorkedtimeString.toLowerCase())
-      );
-    }
-
-    if (selectedDepartments.length > 0) {
-      filteredData = filteredData.filter(({ employee_id }) =>
-        selectedDepartments.includes(employee_id.department_id._id)
-      );
-    }
-
-    if (selectedPositions.length > 0) {
-      filteredData = filteredData.filter(({ employee_id }) =>
-        selectedPositions.includes(employee_id.position_id._id)
-      );
-    }
-
-    setFilteredWorkedtimes(filteredData);
-  }, [
-    selectedYear,
-    selectedMonth,
-    selectedDay.start,
-    selectedDay.end,
-    searchWorkedtimeString,
-    selectedDepartments,
-    selectedPositions,
-    workedtimes,
-  ]);
-  useEffect(() => {
-    const newWorkedtimeOutputData = {};
-    if (!selectedDay.end) {
-      setOutputWorkedtimes({
-        [selectedYear + "-" + selectedMonth + "-" + selectedDay.start]:
-          filteredWorkedtimes,
-      });
-    } else {
-      for (let i = selectedDay.start; i <= selectedDay.end; i++) {
-        newWorkedtimeOutputData[selectedYear + "-" + selectedMonth + "-" + i] =
-          filteredWorkedtimes.filter((item) =>
-            isSameDate(
-              new Date(item.date),
-              new Date(Date.UTC(selectedYear, selectedMonth - 1, i))
-            )
-          );
-      }
-      setOutputWorkedtimes(newWorkedtimeOutputData);
-    }
-  }, [filteredWorkedtimes]);
+  }, [selectedMonth, selectedYear]);;
 
   async function feactData() {
     try {
@@ -166,18 +76,6 @@ export default function Calendar() {
     }
 
     return monthArray;
-  }
-  function isSameDate(date1, date2) {
-    return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
-    );
-  }
-  function clearAllFilter() {
-    setSelectedDepartments([]);
-    setSelectedPositions([]);
-    setSearchWorkedtimeString("");
   }
   function handleSelectMonth(marker) {
     if (marker == "+" && selectedMonth < 12) {
@@ -295,69 +193,9 @@ export default function Calendar() {
     }
   }
 
-  function handleFilterCheckboxChange(id, marker) {
-    if (marker == "Отдел") {
-      setSelectedDepartments((prevSelected) => {
-        if (prevSelected.includes(id)) {
-          return prevSelected.filter((deptId) => deptId !== id);
-        } else {
-          return [...prevSelected, id];
-        }
-      });
-    } else if (marker == "Должность") {
-      setSelectedPositions((prevSelected) => {
-        if (prevSelected.includes(id)) {
-          return prevSelected.filter((posId) => posId !== id);
-        } else {
-          return [...prevSelected, id];
-        }
-      });
-    }
-  }
-  async function handleDeleteWorkedtimeData(id) {
-    try {
-      await axios.delete(
-        `http://localhost:5050/workedtime/${id}`
-      );
-      setAlertData({
-        type: "success",
-        message: "Рабочее время успешно удалено",
-      });
-      feactData();
-    } catch (error) {
-      setAlertData({
-        type: "error",
-        message: error.message,
-      });
-    }
-  }
-
-  function handleShowEditWorkedtimeModal(id) {
-    setIsShowEditWorkedtimeModal((prev) => !prev);
-
-   
-    setSelectedWorkedtimeId(id);
-  }
+  
   return (
     <>
-      <ModalAddWorkedtime
-        isShowModal={isShowAddWorkedtimeModal}
-        setIsShowModal={setIsShowAddWorkedtimeModal}
-        employees={employees}
-        selectedDay={selectedDay}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        setAlertData={setAlertData}
-        feactData={feactData}
-      />
-      <ModalEditWorkedtime
-        selectedWorkedtimeId={selectedWorkedtimeId}
-        setSelectedWorkedtimeId={setSelectedWorkedtimeId}
-        isShowModal={isShowEditWorkedtimeModal}
-        setAlertData={setAlertData}
-        setIsShowEditWorkedtimeModal={setIsShowEditWorkedtimeModal}
-        feactData={feactData}
-      ></ModalEditWorkedtime>
       <Alert alertData={alertData} setAlertData={setAlertData} />
       <Navbar />
       <main className="flex overflow-y-hidden">
@@ -365,18 +203,13 @@ export default function Calendar() {
           selectedDay={selectedDay}
           selectedMonth={selectedMonth}
           setSelectedDay={setSelectedDay}
+          selectedYear={selectedYear}
           positions={positions}
           departments={departments}
-          handleFilterCheckboxChange={handleFilterCheckboxChange}
-          outputWorkedtimes={outputWorkedtimes}
-          setIsShowAddWorkedtimeModal={setIsShowAddWorkedtimeModal}
-          handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
-          handleShowEditWorkedtimeModal={handleShowEditWorkedtimeModal}
-          searchWorkedtimeString={searchWorkedtimeString}
-          setSearchWorkedtimeString={setSearchWorkedtimeString}
-          clearAllFilter={clearAllFilter}
-          selectedDepartments={selectedDepartments}
-          selectedPositions={selectedPositions}
+          workedtimes={workedtimes}
+          setAlertData={setAlertData}
+          feactData={feactData}
+          employees={employees}
         ></ControlCalendarBlock>
         <div className="lg:flex lg:h-full w-full lg:flex-col mt-1">
           <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 lg:flex-none">
