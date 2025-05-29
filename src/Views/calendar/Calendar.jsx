@@ -1,6 +1,7 @@
 import Navbar from "../../Components/Navbar.jsx";
 import Alert from "../../Components/Alert.jsx";
 import ModalAddWorkedtime from "../calendar/ModalAddWorkedtime.jsx";
+import ModalEditWorkedtime from '../calendar/ModalEditWorkedtime.jsx'
 import ControlCalendarBlock from "../../Components/ControlCalendarBlock.jsx";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -20,6 +21,7 @@ export default function Calendar() {
   const [workedtimes, setWorkedtimes] = useState([]);
   const [filteredWorkedtimes, setFilteredWorkedtimes] = useState([]);
   const [outputWorkedtimes, setOutputWorkedtimes] = useState({});
+  const [selectedWorkedtimeId, setSelectedWorkedtimeId] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [positions, setPositions] = useState([]);
   const [selectedPositions, setSelectedPositions] = useState([]);
@@ -27,9 +29,9 @@ export default function Calendar() {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] =
     useState(false);
-  const [isShowEditWorkedtimeModa, setIsShowEditWorkedtimeModal] = useState(false)
+  const [isShowEditWorkedtimeModal, setIsShowEditWorkedtimeModal] = useState(false)
   const [searchWorkedtimeString, setSearchWorkedtimeString] = useState("");
-  const [itemMenuId, setItemMenuId] = useState();
+  
   useEffect(() => {
     feactData();
   }, []);
@@ -312,9 +314,6 @@ export default function Calendar() {
       });
     }
   }
-  function handleShowItemMenu(id) {
-    setItemMenuId(itemMenuId == id ? null : id);
-  }
   async function handleDeleteWorkedtimeData(id) {
     try {
       await axios.delete(
@@ -333,8 +332,12 @@ export default function Calendar() {
     }
   }
 
-  function handleShowEditWorkedtieModal() {}
+  function handleShowEditWorkedtimeModal(id) {
+    setIsShowEditWorkedtimeModal((prev) => !prev);
 
+   
+    setSelectedWorkedtimeId(id);
+  }
   return (
     <>
       <ModalAddWorkedtime
@@ -347,6 +350,14 @@ export default function Calendar() {
         setAlertData={setAlertData}
         feactData={feactData}
       />
+      <ModalEditWorkedtime
+        selectedWorkedtimeId={selectedWorkedtimeId}
+        setSelectedWorkedtimeId={setSelectedWorkedtimeId}
+        isShowModal={isShowEditWorkedtimeModal}
+        setAlertData={setAlertData}
+        setIsShowEditWorkedtimeModal={setIsShowEditWorkedtimeModal}
+        feactData={feactData}
+      ></ModalEditWorkedtime>
       <Alert alertData={alertData} setAlertData={setAlertData} />
       <Navbar />
       <main className="flex overflow-y-hidden">
@@ -360,15 +371,12 @@ export default function Calendar() {
           outputWorkedtimes={outputWorkedtimes}
           setIsShowAddWorkedtimeModal={setIsShowAddWorkedtimeModal}
           handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
-          handleShowEditWorkedtieModal={handleShowEditWorkedtieModal}
+          handleShowEditWorkedtimeModal={handleShowEditWorkedtimeModal}
           searchWorkedtimeString={searchWorkedtimeString}
           setSearchWorkedtimeString={setSearchWorkedtimeString}
           clearAllFilter={clearAllFilter}
           selectedDepartments={selectedDepartments}
           selectedPositions={selectedPositions}
-          handleShowItemMenu={handleShowItemMenu}
-          itemMenuId={itemMenuId}
-          setItemMenuId={setItemMenuId}
         ></ControlCalendarBlock>
         <div className="lg:flex lg:h-full w-full lg:flex-col mt-1">
           <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 lg:flex-none">

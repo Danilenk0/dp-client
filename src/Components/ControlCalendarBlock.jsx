@@ -1,5 +1,5 @@
 import FilterMenu from "./FilterMenu";
-import {useEffect} from 'react'
+import {useState} from 'react'
 
 export default function ControlCalendarBlok({
   selectedDay,
@@ -16,9 +16,12 @@ export default function ControlCalendarBlok({
   selectedDepartments,
   selectedPositions,
   handleDeleteWorkedtimeData,
-  handleShowItemMenu,
-  itemMenuId,
+  handleShowEditWorkedtimeModal,
 }) {
+  const [itemMenuId, setItemMenuId] = useState();
+  function handleShowItemMenu(id) {
+    setItemMenuId(itemMenuId == id ? null : id);
+  }
   return (
     <section
       className={`min-w-150 rounded-xs border-gray-100 border bg-gray-100 p-1 flex flex-col transition max-h-162 pb-10 ${
@@ -148,7 +151,12 @@ export default function ControlCalendarBlok({
                         >
                           <ul className="py-1 text-sm text-gray-700">
                             <li>
-                              <a className="block py-2 px-4 hover:bg-gray-100 flex items-center gap-2 transition duration-200">
+                              <a
+                                onClick={() =>
+                                  handleShowEditWorkedtimeModal(item._id)
+                                }
+                                className="block py-2 px-4 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
+                              >
                                 <i className="bx bx-edit-alt"></i>
                                 <p>Редактировать</p>
                               </a>
