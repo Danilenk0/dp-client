@@ -1,8 +1,6 @@
 import Navbar from "../../Components/Navbar.jsx";
 import Alert from "../../Components/Alert.jsx";
-import ModalAddWorkedtime from "../calendar/ModalAddWorkedtime.jsx";
-import ModalEditWorkedtime from '../calendar/ModalEditWorkedtime.jsx'
-import ControlCalendarBlock from "../../Components/ControlCalendarBlock.jsx";
+import ControlCalendarBlock from "./ControlCalendarBlock.jsx";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -22,6 +20,7 @@ export default function Calendar() {
   const [employees, setEmployees] = useState([]);
   const [positions, setPositions] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [noshows, setNoshows] = useState([]);
   
   //для получения данных с сервера
   useEffect(() => {
@@ -57,6 +56,10 @@ export default function Calendar() {
         "http://localhost:5050/department"
       );
       setDepartments(responseDepartments.data);
+
+      const responseNoshows = await axios.get('http://localhost:5050/noshow');
+      setNoshows(responseNoshows.data)
+
     } catch (error) {
       setAlertData({
         type: "error",
@@ -210,6 +213,7 @@ export default function Calendar() {
           setAlertData={setAlertData}
           feactData={feactData}
           employees={employees}
+          noshows={noshows}
         ></ControlCalendarBlock>
         <div className="lg:flex lg:h-full w-full lg:flex-col mt-1">
           <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 lg:flex-none">
@@ -295,27 +299,29 @@ export default function Calendar() {
                 {calendarNumbers.map((item, index) => {
                   return (
                     <div
-                      onClick={() => (item != 0 ? handleSelectDay(item) : "")}
+                      onClick={() =>
+                        item !== 0 ? handleSelectDay(item) : null
+                      }
                       key={index}
-                      className={`relative  px-3 py-2 text-gray-500 min-h-22 ${
-                        item == 0 ? "bg-gray-100" : "bg-gray-50"
-                      }${
-                        (selectedDay.start != null &&
-                          item == selectedDay.start) ||
-                        (selectedDay.start != null &&
-                          selectedDay.end != null &&
+                      className={`relative px-3 py-2 text-gray-500 min-h-22 ${
+                        item === 0 ? "bg-gray-100" : "bg-gray-50"
+                      } ${
+                        (selectedDay.start !== null &&
+                          item === selectedDay.start) ||
+                        (selectedDay.start !== null &&
+                          selectedDay.end !== null &&
                           item >= selectedDay.start &&
                           item <= selectedDay.end &&
-                          item != 0)
-                          ? "border-indigo-600 border"
-                          : ""
+                          item !== 0)
+                          ? "border-indigo-600 border bg-indigo-50" 
+                          : "border-transparent" 
                       }`}
                     >
                       <time
                         dateTime="2021-12-27"
                         className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                          new Date().getFullYear() == selectedYear &&
-                          new Date().getMonth() + 1 == selectedMonth &&
+                          new Date().getFullYear() === selectedYear &&
+                          new Date().getMonth() + 1 === selectedMonth &&
                           new Date().getDate() === item
                             ? "bg-indigo-600 font-semibold text-white"
                             : ""

@@ -1,6 +1,7 @@
-import FilterMenu from "./FilterMenu";
-import ModalAddWorkedtime from "../Views/calendar/ModalAddWorkedtime";
-import ModalEditWorkedtime from "../Views/calendar/ModalEditWorkedtime";
+import AlertValidation from "../../Components/AlertValidation";
+import FilterMenu from "../../Components/FilterMenu";
+import ModalAddWorkedtime from "./ModalAddWorkedtime";
+import WorkedtimeOutputList from "../../Components/WorkedtimeOutputList";
 import { useState, useEffect } from "react";
 import axios from 'axios'
 
@@ -15,17 +16,27 @@ export default function ControlCalendarBlok({
   selectedYear,
   setAlertData,
   feactData,
+  noshows
 }) {
+  const [validationErrors, setValidationErrors] = useState([])
   const [itemMenuId, setItemMenuId] = useState();
+  const [updateItemId, setUpdateItemId] = useState('')
+  const [workedtimeUpdateData, setWorkedtimeUpdateData] = useState({
+    id:'',
+    data: '',
+    employee_id:'',
+    time:''
+  })
   const [selectedPositions, setSelectedPositions] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [filteredWorkedtimes, setFilteredWorkedtimes] = useState([]);
   const [outputWorkedtimes, setOutputWorkedtimes] = useState({});
+  const [outputNoshows, setOutputNoshows] = useState({});
   const [searchWorkedtimeString, setSearchWorkedtimeString] = useState("");
-  const [isShowEditWorkedtimeModal, setIsShowEditWorkedtimeModal] =
-    useState(false);
   const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] =
     useState(false);
+  const [markerShowBlock, setmarkerShowBlock] = useState('noshow')
+  
+  
 
   useEffect(() => {
     let filteredData = [...workedtimes];
@@ -164,8 +175,41 @@ export default function ControlCalendarBlok({
       });
     }
   }
+  async function handleUpdateWorkedtimeData() {
+    try {
+      const response = await axios.put(
+        `http://localhost:5050/workedtime/${workedtimeUpdateData._id}`,
+        workedtimeUpdateData
+      );
+      feactData();
+      setAlertData({
+        type: "success",
+        message: response.data.message,
+      });
+      setWorkedtimeUpdateData({
+        id: "",
+        data: "",
+        employee_id: "",
+        time: "",
+      });
+      setUpdateItemId('');
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setValidationErrors(error.response.data.errors);
+      } else {
+        setAlertData({
+          type: "error",
+          message: error.message,
+        });
+      }
+    }
+  }
   return (
     <>
+      <AlertValidation
+        validationErrors={validationErrors}
+        setValidationErrors={setValidationErrors}
+      />
       <ModalAddWorkedtime
         isShowModal={isShowAddWorkedtimeModal}
         setIsShowModal={setIsShowAddWorkedtimeModal}
@@ -176,14 +220,6 @@ export default function ControlCalendarBlok({
         setAlertData={setAlertData}
         feactData={feactData}
       />
-      <ModalEditWorkedtime
-        id={itemMenuId}
-        setId={setItemMenuId}
-        isShowModal={isShowEditWorkedtimeModal}
-        setAlertData={setAlertData}
-        setIsShowEditWorkedtimeModal={setIsShowEditWorkedtimeModal}
-        feactData={feactData}
-      ></ModalEditWorkedtime>
       <section
         className={`min-w-150 rounded-xs border-gray-100 border bg-gray-100 p-1 flex flex-col transition max-h-162 pb-10 ${
           selectedDay.start ? "" : "hidden"
@@ -229,12 +265,18 @@ export default function ControlCalendarBlok({
         <main className="flex gap-1 h-full ">
           <div className="bg-white p-2.5 shadow-sm flex flex-col gap-1 rounded-md">
             <button
+              onClick={() => {
+                setmarkerShowBlock("workedtime");
+              }}
               type="button"
               className="rounded-md bg-indigo-600 px-3 py-2 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition duration-200"
             >
               <i class="bx bx-laptop text-white"></i>
             </button>
             <button
+              onClick={() => {
+                setmarkerShowBlock("noshow");
+              }}
               type="button"
               className="rounded-md bg-indigo-600 px-3 py-2 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition duration-200"
             >
@@ -269,89 +311,21 @@ export default function ControlCalendarBlok({
                 <i class="bx bx-plus text-white"></i>
               </button>
             </header>
-            <ul>
-              {Object.entries(outputWorkedtimes).map(([key, value]) => (
-                <div key={key}>
-                  {value.length === 0 ? null : (
-                    <div className="flex items-center justify-center gap-2">
-                      <hr className="h-[3px] bg-gray-200 border-0 dark:bg-gray-700 w-[35%] rounded-md" />
-                      <p className="text-gray-300 font-semibold">{key}</p>
-                      <hr className="h-[3px] bg-gray-200 border-0 dark:bg-gray-700 w-[35%] rounded-md" />
-                    </div>
-                  )}
-                  {value.map((item, index) => (
-                    <li
-                      key={index}
-                      className="p-2.5 rounded-md border border-gray-200 font-semibold shadow-sm mb-2.5"
-                    >
-                      <div className="flex justify-between">
-                        <div className="flex justify-between items-center w-full pe-7">
-                          <p className="text-gray-900">
-                            {`${item.employee_id.lastName} ${item.employee_id.firstName} ${item.employee_id.surname}`}
-                          </p>
-                          <p className="text-gray-500">
-                            {item.time}{" "}
-                            {item.time === 1
-                              ? "час"
-                              : item.time > 1 && item.time < 5
-                              ? "часа"
-                              : "часов"}
-                          </p>
-                        </div>
-                        <div className="relative" id="item-menu">
-                          <button
-                            onClick={() => setItemMenuId(item._id)}
-                            className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center"
-                          >
-                            <i className="bx bx-dots-horizontal-rounded text-[20px]"></i>
-                          </button>
-                          <div
-                            className={`${
-                              itemMenuId == item._id ? "" : "hidden"
-                            } absolute end-10 top-0 z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow`}
-                          >
-                            <ul className="py-1 text-sm text-gray-700">
-                              <li>
-                                <a
-                                  onClick={() =>
-                                    setIsShowEditWorkedtimeModal(item._id)
-                                  }
-                                  className="block py-2 px-4 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
-                                >
-                                  <i className="bx bx-edit-alt"></i>
-                                  <p>Редактировать</p>
-                                </a>
-                              </li>
-                              <li>
-                                <a
-                                  href="#"
-                                  onClick={() =>
-                                    handleDeleteWorkedtimeData(item._id)
-                                  }
-                                  className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
-                                >
-                                  <i className="bx bx-folder-minus"></i>
-                                  <p>Удалить</p>
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                      <hr className="h-px my-1 bg-gray-200 border-0" />
-                      <div className="flex flex-col">
-                        <p className="text-gray-500 text-[10px]">
-                          Отдел: {item.employee_id.department_id.name}
-                        </p>
-                        <p className="text-gray-500 text-[10px]">
-                          Должность: {item.employee_id.position_id.name}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </div>
-              ))}
-            </ul>
+            {markerShowBlock == "workedtime" ? (
+              <WorkedtimeOutputList
+                outputWorkedtimes={outputWorkedtimes}
+                setItemMenuId={setItemMenuId}
+                handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
+                itemMenuId={itemMenuId}
+                updateItemId={updateItemId}
+                setUpdateItemId={setUpdateItemId}
+                setWorkedtimeUpdateData={setWorkedtimeUpdateData}
+                workedtimeUpdateData={workedtimeUpdateData}
+                handleUpdateWorkedtimeData={handleUpdateWorkedtimeData}
+              ></WorkedtimeOutputList>
+            ) : (
+              "noshow"
+            )}
           </div>
         </main>
       </section>
