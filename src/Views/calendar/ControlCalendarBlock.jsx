@@ -472,15 +472,7 @@ export default function ControlCalendarBlok({
                 <i class="bx bx-plus text-white"></i>
               </button>
             </header>
-            {markerShowBlock === "workedtime" ? 
-              Object.keys(outputWorkedtimes).length === 0 ? (
-                <div
-                  className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
-                  role="alert"
-                >
-                  Данных на эти даты нет, рекомендуем добавить данные!
-                </div>
-              ) : (
+            {markerShowBlock === "workedtime" ? (
                 <WorkedtimeOutputList
                   outputWorkedtimes={outputWorkedtimes}
                   setItemMenuId={setItemMenuId}
@@ -493,14 +485,7 @@ export default function ControlCalendarBlok({
                   handleUpdateWorkedtimeData={handleUpdateWorkedtimeData}
                 />
               )
-             : Object.keys(outputNoshows).length === 0 ? (
-              <div
-                className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
-                role="alert"
-              >
-                Данных на эти даты нет, рекомендуем добавить данные!
-              </div>
-            ) : (
+             :(
               <NoshowOutputList
                 outputNoshows={outputNoshows}
                 setItemMenuId={setItemMenuId}
