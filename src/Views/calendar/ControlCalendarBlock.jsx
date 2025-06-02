@@ -2,6 +2,7 @@ import AlertValidation from "../../Components/AlertValidation";
 import FilterMenu from "../../Components/FilterMenu";
 import ModalAddWorkedtime from "./ModalAddWorkedtime";
 import WorkedtimeOutputList from "../../Components/WorkedtimeOutputList";
+import NoshowOutputList from "../../Components/NoshowOutputList";
 import { useState, useEffect } from "react";
 import axios from 'axios'
 
@@ -16,17 +17,24 @@ export default function ControlCalendarBlok({
   selectedYear,
   setAlertData,
   feactData,
-  noshows
+  noshows,
+  causes
 }) {
   const [validationErrors, setValidationErrors] = useState([])
   const [itemMenuId, setItemMenuId] = useState();
   const [updateItemId, setUpdateItemId] = useState('')
   const [workedtimeUpdateData, setWorkedtimeUpdateData] = useState({
-    id:'',
+    _id:'',
     data: '',
     employee_id:'',
     time:''
   })
+  const [noshowUpdateData, setNoshowUpdateData] = useState({
+    date: "",
+    type:"",
+    employee_id: "",
+    cause_id: "",
+  });
   const [selectedPositions, setSelectedPositions] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [outputWorkedtimes, setOutputWorkedtimes] = useState({});
@@ -128,6 +136,99 @@ export default function ControlCalendarBlok({
     selectedPositions,
     workedtimes,
   ]);
+  
+  useEffect(() => {
+    let filteredData = [...noshows];
+
+    const newNoshowOutputData = {};
+
+    if (selectedDay.start) {
+      const startDate = new Date(
+        Date.UTC(selectedYear, selectedMonth - 1, selectedDay.start)
+      );
+      const endDate = selectedDay.end
+        ? new Date(Date.UTC(selectedYear, selectedMonth - 1, selectedDay.end))
+        : startDate;
+
+      filteredData = filteredData.filter((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+    }
+
+    if (searchWorkedtimeString) {
+      filteredData = filteredData.filter(
+        (item) =>
+          item.employee_id.firstName
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.employee_id.lastName
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.employee_id.surname
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.cause_id.name
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase()) ||
+          item.type
+            .toLowerCase()
+            .includes(searchWorkedtimeString.toLowerCase())
+      );
+    }
+
+    if (selectedDepartments.length > 0) {
+      filteredData = filteredData.filter(({ employee_id }) =>
+        selectedDepartments.includes(employee_id.department_id)
+      );
+    }
+
+    if (selectedPositions.length > 0) {
+      filteredData = filteredData.filter(({ employee_id }) =>
+        selectedPositions.includes(employee_id.position_id)
+      );
+    }
+    if (!selectedDay.end) {
+      setOutputNoshows({
+        [selectedDay.start +
+        "-" +
+        new Date(2023, selectedMonth - 1).toLocaleString("ru-RU", {
+          month: "long",
+        }) +
+        "-" +
+        selectedYear]: filteredData,
+      });
+    } else {
+      for (let i = selectedDay.start; i <= selectedDay.end; i++) {
+        newNoshowOutputData[
+          i +
+            "-" +
+            new Date(2023, selectedMonth - 1).toLocaleString("ru-RU", {
+              month: "long",
+            }) +
+            "-" +
+            selectedYear
+        ] = filteredData.filter((item) =>
+          isSameDate(
+            new Date(item.date),
+            new Date(Date.UTC(selectedYear, selectedMonth - 1, i))
+          )
+        );
+      }
+      setOutputNoshows(newNoshowOutputData);
+      console.log(newNoshowOutputData);
+    }
+  }, [
+    selectedYear,
+    selectedMonth,
+    selectedDay.start,
+    selectedDay.end,
+    searchWorkedtimeString,
+    selectedDepartments,
+    selectedPositions,
+    noshows,
+  ]);
+
   function isSameDate(date1, date2) {
     return (
       date1.getFullYear() === date2.getFullYear() &&
@@ -175,6 +276,21 @@ export default function ControlCalendarBlok({
       });
     }
   }
+  async function handleDeleteNoshowData(id) {
+    try {
+      await axios.delete(`http://localhost:5050/noshow/${id}`);
+      setAlertData({
+        type: "success",
+        message: "Неявка успешно удалена",
+      });
+      feactData();
+    } catch (error) {
+      setAlertData({
+        type: "error",
+        message: error.message,
+      });
+    }
+  }
   async function handleUpdateWorkedtimeData() {
     try {
       const response = await axios.put(
@@ -193,6 +309,36 @@ export default function ControlCalendarBlok({
         time: "",
       });
       setUpdateItemId('');
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        setValidationErrors(error.response.data.errors);
+      } else {
+        setAlertData({
+          type: "error",
+          message: error.message,
+        });
+      }
+    }
+  }
+  async function handleUpdateNoshowData() {
+    try {
+      const response = await axios.put(
+        `http://localhost:5050/noshow/${updateItemId}`,
+        noshowUpdateData
+      );
+      feactData();
+      setAlertData({
+        type: "success",
+        message: response.data.message,
+      });
+      setNoshowUpdateData({
+        _id: "",
+        data: "",
+       type: "",
+        employee_id: "",
+        cause_id:''
+      });
+      setUpdateItemId("");
     } catch (error) {
       if (error.response && error.response.status === 400) {
         setValidationErrors(error.response.data.errors);
@@ -285,7 +431,7 @@ export default function ControlCalendarBlok({
           </div>
           <div className="bg-white p-2.5 shadow-sm  flex-grow rounded-md overflow-y-scroll h-147">
             <header className="p-2.5 rounded-md border border-gray-200 shadow-sm mb-2.5 flex gap-2.5 flex justify-between relative">
-              <div className="flex gap-2.5  relative">
+              <div className="flex gap-2.5 items-center  relative">
                 <FilterMenu
                   data={departments}
                   handleCheckboxChange={handleFilterCheckboxChange}
@@ -302,6 +448,21 @@ export default function ControlCalendarBlok({
                 >
                   Должность
                 </FilterMenu>
+                {searchWorkedtimeString ||
+                Object.keys(selectedDepartments).length !== 0 ||
+                Object.keys(selectedPositions).length !== 0 ? (
+                  <button
+                    className="text-gray-400 bg-transparent hover:bg-gray-100 hover:text-gray-900 rounded-lg text-sm w-min h-8 ms-auto flex items-center justify-center gap-1 px-2.5 transition duration-200"
+                    onClick={() => {
+                      clearAllFilter();
+                    }}
+                  >
+                    <p>Очистить</p>
+                    <i className="bx bx-x text-[20px] mt-1 "></i>
+                  </button>
+                ) : (
+                  ""
+                )}
               </div>
               <button
                 onClick={() => setIsShowAddWorkedtimeModal(true)}
@@ -311,20 +472,47 @@ export default function ControlCalendarBlok({
                 <i class="bx bx-plus text-white"></i>
               </button>
             </header>
-            {markerShowBlock == "workedtime" ? (
-              <WorkedtimeOutputList
-                outputWorkedtimes={outputWorkedtimes}
+            {markerShowBlock === "workedtime" ? 
+              Object.keys(outputWorkedtimes).length === 0 ? (
+                <div
+                  className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
+                  role="alert"
+                >
+                  Данных на эти даты нет, рекомендуем добавить данные!
+                </div>
+              ) : (
+                <WorkedtimeOutputList
+                  outputWorkedtimes={outputWorkedtimes}
+                  setItemMenuId={setItemMenuId}
+                  handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
+                  itemMenuId={itemMenuId}
+                  updateItemId={updateItemId}
+                  setUpdateItemId={setUpdateItemId}
+                  setWorkedtimeUpdateData={setWorkedtimeUpdateData}
+                  workedtimeUpdateData={workedtimeUpdateData}
+                  handleUpdateWorkedtimeData={handleUpdateWorkedtimeData}
+                />
+              )
+             : Object.keys(outputNoshows).length === 0 ? (
+              <div
+                className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+                role="alert"
+              >
+                Данных на эти даты нет, рекомендуем добавить данные!
+              </div>
+            ) : (
+              <NoshowOutputList
+                outputNoshows={outputNoshows}
                 setItemMenuId={setItemMenuId}
-                handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
+                handleDeleteNoshowData={handleDeleteNoshowData}
                 itemMenuId={itemMenuId}
                 updateItemId={updateItemId}
                 setUpdateItemId={setUpdateItemId}
-                setWorkedtimeUpdateData={setWorkedtimeUpdateData}
-                workedtimeUpdateData={workedtimeUpdateData}
-                handleUpdateWorkedtimeData={handleUpdateWorkedtimeData}
-              ></WorkedtimeOutputList>
-            ) : (
-              "noshow"
+                setNoshowUpdateData={setNoshowUpdateData}
+                noshowUpdateData={noshowUpdateData}
+                handleUpdateNoshowData={handleUpdateNoshowData}
+                causes={causes}
+              />
             )}
           </div>
         </main>

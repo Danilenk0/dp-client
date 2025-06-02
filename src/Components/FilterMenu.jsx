@@ -35,7 +35,7 @@ export default function ({ data, handleCheckboxChange, selectedDepartments,selec
       </button>
       <div
         id="filterDropdown"
-        className={`absolute z-20 top-16 end-2 w-70 h-100 p-3 bg-white rounded-lg shadow-md overflow-y-scroll ${
+        className={`absolute z-20 top-16 start-2 w-70 h-100 p-3 bg-white rounded-lg shadow-md overflow-y-scroll ${
           isShowFilter ? "" : "hidden"
         }`}
       >

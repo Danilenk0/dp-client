@@ -21,6 +21,7 @@ export default function Calendar() {
   const [positions, setPositions] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [noshows, setNoshows] = useState([]);
+  const [causes, setCauses] = useState([]);
   
   //для получения данных с сервера
   useEffect(() => {
@@ -57,8 +58,12 @@ export default function Calendar() {
       );
       setDepartments(responseDepartments.data);
 
-      const responseNoshows = await axios.get('http://localhost:5050/noshow');
+      const responseNoshows = await axios.get("http://localhost:5050/noshow");
       setNoshows(responseNoshows.data)
+      console.log(responseNoshows.data);
+
+      const responseCauses = await axios.get('http://localhost:5050/cause');
+      setCauses(responseCauses.data);
 
     } catch (error) {
       setAlertData({
@@ -214,6 +219,7 @@ export default function Calendar() {
           feactData={feactData}
           employees={employees}
           noshows={noshows}
+          causes={causes}
         ></ControlCalendarBlock>
         <div className="lg:flex lg:h-full w-full lg:flex-col mt-1">
           <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 lg:flex-none">

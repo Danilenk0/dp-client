@@ -1,10 +1,15 @@
-export default function NoshowOutputList(
+export default function NoshowOutputList({
   outputNoshows,
-  setIsShowEditNoshowModal,
   setItemMenuId,
   handleDeleteNoshowData,
-  itemMenuId
-) {
+  itemMenuId,
+  updateItemId,
+  setUpdateItemId,
+  setNoshowUpdateData,
+  noshowUpdateData,
+  handleUpdateNoshowData,
+  causes
+}) {
   return (
     <ul>
       {Object.entries(outputNoshows).map(([key, value]) => (
@@ -19,61 +24,158 @@ export default function NoshowOutputList(
           {value.map((item, index) => (
             <li
               key={index}
-              className="p-2.5 rounded-md border border-gray-200 font-semibold shadow-sm mb-2.5"
+              className="p-2.5 rounded-md border border-gray-200 font-semibold shadow-sm mb-2.5 relative"
             >
               <div className="flex justify-between">
                 <div className="flex justify-between items-center w-full pe-7">
                   <p className="text-gray-900">
                     {`${item.employee_id.lastName} ${item.employee_id.firstName} ${item.employee_id.surname}`}
                   </p>
-                  <p className="text-gray-500">
-                    Причина:{item.cause_id.name}
-                  </p>
                 </div>
                 <div className="relative" id="item-menu">
-                  <button
-                    onClick={() => setItemMenuId(item._id)}
-                    className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center"
-                  >
-                    <i className="bx bx-dots-horizontal-rounded text-[20px]"></i>
-                  </button>
-                  <div
-                    className={`${
-                      itemMenuId == item._id ? "" : "hidden"
-                    } absolute end-10 top-0 z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow`}
-                  >
-                    <ul className="py-1 text-sm text-gray-700">
-                      <li>
-                        <a
-                          onClick={() => setIsShowEditNoshowModal(item._id)}
-                          className="block py-2 px-4 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
-                        >
-                          <i className="bx bx-edit-alt"></i>
-                          <p>Редактировать</p>
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          href="#"
-                          onClick={() => handleDeleteNoshowData(item._id)}
-                          className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
-                        >
-                          <i className="bx bx-folder-minus"></i>
-                          <p>Удалить</p>
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
+                  {updateItemId == item._id ? (
+                    <div className=" flex gap-0.5">
+                      <button
+                        onClick={handleUpdateNoshowData}
+                        className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center"
+                      >
+                        <i class="bx bx-save  text-[20px]"></i>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setUpdateItemId("");
+                          setNoshowUpdateData({
+                            date: "",
+                            employee_id: "",
+                            type: "",
+                            cause_id: "",
+                          });
+                        }}
+                        className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center"
+                      >
+                        <i class="bx bx-x  text-[20px]"></i>
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setItemMenuId(item._id)}
+                        className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center"
+                      >
+                        <i className="bx bx-dots-horizontal-rounded text-[20px]"></i>
+                      </button>
+                      <div
+                        className={`${
+                          itemMenuId == item._id ? "" : "hidden"
+                        } absolute end-10 top-0 z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow`}
+                      >
+                        <ul className="py-1 text-sm text-gray-700">
+                          <li>
+                            <a
+                              onClick={() => {
+                                setUpdateItemId(item._id);
+                                setItemMenuId();
+                                setNoshowUpdateData({
+                                  date: item.date,
+                                  employee_id: item.employee_id._id,
+                                  type: item.type,
+                                  cause_id: item.cause_id,
+                                });
+                              }}
+                              className="block py-2 px-4 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
+                            >
+                              <i className="bx bx-edit-alt"></i>
+                              <p>Редактировать</p>
+                            </a>
+                          </li>
+                          <li>
+                            <a
+                              href="#"
+                              onClick={() => handleDeleteNoshowData(item._id)}
+                              className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
+                            >
+                              <i className="bx bx-folder-minus"></i>
+                              <p>Удалить</p>
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               <hr className="h-px my-1 bg-gray-200 border-0" />
               <div className="flex flex-col">
-                <p className="text-gray-500 text-[10px]">
-                  Отдел: {item.employee_id.department_id.name}
-                </p>
-                <p className="text-gray-500 text-[10px]">
-                  Должность: {item.employee_id.position_id.name}
-                </p>
+                {updateItemId == item._id ? (
+                  <p className="text-gray-500 text-[10px]">
+                    Тип:{" "}
+                    <input
+                      value={noshowUpdateData.type}
+                      onChange={(e) => {
+                        setNoshowUpdateData({
+                          ...noshowUpdateData,
+                          type: e.target.value,
+                        });
+                      }}
+                      className="border-none outline-none text-[10px] text-gray-500"
+                      type="text"
+                    />
+                  </p>
+                ) : (
+                  <p
+                    onClick={() => {
+                      setUpdateItemId(item._id);
+                      setItemMenuId();
+                      setNoshowUpdateData({
+                        date: item.date,
+                        employee_id: item.employee_id._id,
+                        type: item.type,
+                        cause_id: item.cause_id,
+                      });
+                    }}
+                    className="text-gray-500 text-[10px]"
+                  >
+                    Тип: {item.type}
+                  </p>
+                )}
+                {updateItemId === item._id ? (
+                  <p className="text-gray-500 text-[10px]">
+                    Причина:
+                    <select
+                      onChange={(e) =>
+                        setNoshowUpdateData({
+                          ...noshowUpdateData,
+                          cause_id: e.target.value,
+                        })
+                      }
+                      value={item.cause_id}
+                      id="cause"
+                      className="border-none text-gray-500 text-[10px] outline-none"
+                    >
+                      {causes.map((cause) => (
+                        <option key={cause._id} value={cause._id}>
+                          {cause.name}
+                        </option>
+                      ))}
+                    </select>
+                  </p>
+                ) : (
+                  <p
+                    onClick={() => {
+                      setUpdateItemId(item._id);
+                      setItemMenuId();
+                      setNoshowUpdateData({
+                        date: item.date,
+                        employee_id: item.employee_id._id,
+                        type: item.type,
+                        cause_id: item.cause_id,
+                      });
+                    }}
+                    className="text-gray-500 text-[10px]"
+                  >
+                    Причина: {item.cause_id.name}
+                  </p>
+                )}
               </div>
             </li>
           ))}

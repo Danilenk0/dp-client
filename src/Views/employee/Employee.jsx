@@ -66,13 +66,6 @@ function Employee() {
       )
       setDepartments(responseDepartment.data);
       setPositions(responsePositions.data);
-
-      if (responseEmployee.data.length == 0) {
-        setAlertData({
-          type: "error",
-          message: "Нет данных для отображения, добавьте данные!",
-        });
-      }
       setData(responseEmployee.data);
     } catch (error) {
       setAlertData({
@@ -195,7 +188,13 @@ function Employee() {
                   </div>
                 </div>
                 {data.length === 0 ? (
-                  ""
+                  <div
+                    class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 mx-2.5"
+                    role="alert"
+                  >
+                    <span class="font-medium ">Нет данных!</span> Для работы с
+                    сотрудниками рекомендуем добавить данные.
+                  </div>
                 ) : (
                   <>
                     <div className="overflow-x-auto">
