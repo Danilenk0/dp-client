@@ -11,6 +11,14 @@ export default function Navbar() {
       >
         <div className="lg:flex lg:gap-x-12">
           <Link
+            to="/"
+            className={`text-sm font-semibold text-gray-900 pb-2 ${
+              pathSegment == "" ? "border-b-3 border-indigo-600" : ""
+            }`}
+          >
+            Главная
+          </Link>
+          <Link
             to="/employee"
             className={`text-sm font-semibold text-gray-900 pb-2 ${
               pathSegment == "employee" ? "border-b-3 border-indigo-600" : ""
@@ -24,7 +32,7 @@ export default function Navbar() {
               pathSegment == "calendar" ? "border-b-3 border-indigo-600" : ""
             }`}
           >
-           Календарь
+            Календарь
           </Link>
         </div>
       </nav>

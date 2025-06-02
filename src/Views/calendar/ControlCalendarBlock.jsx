@@ -1,6 +1,7 @@
 import AlertValidation from "../../Components/AlertValidation";
 import FilterMenu from "../../Components/FilterMenu";
 import ModalAddWorkedtime from "./ModalAddWorkedtime";
+import ModalAddNoshow from './ModalAddNoshow'
 import WorkedtimeOutputList from "../../Components/WorkedtimeOutputList";
 import NoshowOutputList from "../../Components/NoshowOutputList";
 import { useState, useEffect } from "react";
@@ -42,7 +43,7 @@ export default function ControlCalendarBlok({
   const [searchWorkedtimeString, setSearchWorkedtimeString] = useState("");
   const [isShowAddWorkedtimeModal, setIsShowAddWorkedtimeModal] =
     useState(false);
-  const [markerShowBlock, setmarkerShowBlock] = useState('noshow')
+  const [markerShowBlock, setmarkerShowBlock] = useState('workedtime')
   
   
 
@@ -216,7 +217,6 @@ export default function ControlCalendarBlok({
         );
       }
       setOutputNoshows(newNoshowOutputData);
-      console.log(newNoshowOutputData);
     }
   }, [
     selectedYear,
@@ -356,7 +356,7 @@ export default function ControlCalendarBlok({
         validationErrors={validationErrors}
         setValidationErrors={setValidationErrors}
       />
-      <ModalAddWorkedtime
+      {markerShowBlock == "noshow" ? ( <ModalAddNoshow
         isShowModal={isShowAddWorkedtimeModal}
         setIsShowModal={setIsShowAddWorkedtimeModal}
         employees={employees}
@@ -365,7 +365,19 @@ export default function ControlCalendarBlok({
         selectedYear={selectedYear}
         setAlertData={setAlertData}
         feactData={feactData}
-      />
+        causes={causes}
+      />) : ( <ModalAddWorkedtime
+        isShowModal={isShowAddWorkedtimeModal}
+        setIsShowModal={setIsShowAddWorkedtimeModal}
+        employees={employees}
+        selectedDay={selectedDay}
+        selectedMonth={selectedMonth}
+        selectedYear={selectedYear}
+        setAlertData={setAlertData}
+        feactData={feactData}
+      />)}
+     
+     
       <section
         className={`min-w-150 rounded-xs border-gray-100 border bg-gray-100 p-1 flex flex-col transition max-h-162 pb-10 ${
           selectedDay.start ? "" : "hidden"
@@ -473,19 +485,18 @@ export default function ControlCalendarBlok({
               </button>
             </header>
             {markerShowBlock === "workedtime" ? (
-                <WorkedtimeOutputList
-                  outputWorkedtimes={outputWorkedtimes}
-                  setItemMenuId={setItemMenuId}
-                  handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
-                  itemMenuId={itemMenuId}
-                  updateItemId={updateItemId}
-                  setUpdateItemId={setUpdateItemId}
-                  setWorkedtimeUpdateData={setWorkedtimeUpdateData}
-                  workedtimeUpdateData={workedtimeUpdateData}
-                  handleUpdateWorkedtimeData={handleUpdateWorkedtimeData}
-                />
-              )
-             :(
+              <WorkedtimeOutputList
+                outputWorkedtimes={outputWorkedtimes}
+                setItemMenuId={setItemMenuId}
+                handleDeleteWorkedtimeData={handleDeleteWorkedtimeData}
+                itemMenuId={itemMenuId}
+                updateItemId={updateItemId}
+                setUpdateItemId={setUpdateItemId}
+                setWorkedtimeUpdateData={setWorkedtimeUpdateData}
+                workedtimeUpdateData={workedtimeUpdateData}
+                handleUpdateWorkedtimeData={handleUpdateWorkedtimeData}
+              />
+            ) : (
               <NoshowOutputList
                 outputNoshows={outputNoshows}
                 setItemMenuId={setItemMenuId}

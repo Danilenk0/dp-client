@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import AlertValidation  from '../../Components/AlertValidation.jsx'
+import { useState, useEffect } from "react";
+import axios from "axios";
+import AlertValidation from "../../Components/AlertValidation.jsx";
 
 export default function ModalAddWorkedtime({
   isShowModal,
@@ -11,11 +11,15 @@ export default function ModalAddWorkedtime({
   selectedYear,
   setAlertData,
   feactData,
+  causes,
 }) {
   const [searchString, setSearchString] = useState("");
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
-  const [selectValue, setSelectValue] = useState("");
+  const [noshowData, setNoshowData] = useState({
+    type: "",
+    cause_id: "",
+  });
   const [validationErrors, setValidationErrors] = useState([]);
 
   useEffect(() => {
@@ -52,23 +56,23 @@ export default function ModalAddWorkedtime({
     }
   }
   function handleSelectChange(event) {
-    setSelectValue(event.target.value);
+    setNoshowData({
+      ...noshowData,
+      cause_id: event.target.value,
+    });
   }
 
-  async function handleAddWorkedtime() {
+  async function handleAddNoshow() {
     try {
       const data = {
-        time: selectValue,
+        type: noshowData.type,
+        cause_id: noshowData.cause_id,
         selectedDay,
         selectedMonth,
         selectedYear,
         selectedEmployees,
       };
-
-      const response = await axios.post(
-        "http://localhost:5050/workedtime",
-        data
-      );
+      const response = await axios.post("http://localhost:5050/noshow", data);
       feactData();
       setAlertData({
         type: "success",
@@ -101,7 +105,7 @@ export default function ModalAddWorkedtime({
           <div className="relative bg-white rounded-lg shadow-2xl p-2.5">
             <div className="flex items-center justify-between  md:p-5 border-b rounded-t border-gray-200">
               <div className=" font-semibold text-gray-900  flex gap-4">
-                <p> Добавление рабочего времени на </p>
+                <p> Добавление неявки на </p>
                 <p className="text-gray-500">
                   {!selectedDay.end
                     ? selectedDay.start
@@ -116,7 +120,7 @@ export default function ModalAddWorkedtime({
                 onClick={() => {
                   setIsShowModal(false);
                   setSelectedEmployees([]);
-                  setSelectValue("");
+                  setNoshowData({});
                 }}
                 type="button"
                 className="text-gray-400 bg-transparent hover:bg-gray-100 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center transition duration-200"
@@ -125,23 +129,29 @@ export default function ModalAddWorkedtime({
               </button>
             </div>
             <main>
-              <form action="" className="flex gap-2.5 py-2.5">
-                <div>
+              <form action="" className="flex flex-col gap-2.5 py-2.5">
+                <div className="flex gap-2.5">
                   <select
-                    value={selectValue}
-                    onChange={handleSelectChange}
+                    value={noshowData.cause_id}
+                    onChange={(e) => handleSelectChange(e)}
                     className="bg-gray-50 border border-gray-300  text-gray-900 text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block w-auto p-2.5 outline-gray-200"
                   >
-                    <option selected>Кол-во часов</option>
-                    <option value="1">1 час</option>
-                    <option value="2">2 часа</option>
-                    <option value="3">3 часа</option>
-                    <option value="4">4 часа</option>
-                    <option value="5">5 часов</option>
-                    <option value="6">6 часов</option>
-                    <option value="7">7 часов</option>
-                    <option value="8">8 часов</option>
+                    {causes.map((cause) => (
+                      <option value={cause._id}>{cause.name}</option>
+                    ))}
                   </select>
+                  <input
+                    onChange={(e) =>
+                      setNoshowData({
+                        ...noshowData,
+                        type: e.target.value,
+                      })
+                    }
+                    value={noshowData.type}
+                    type="text"
+                    className="block w-full p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                    placeholder="Тип неявки"
+                  />
                 </div>
                 <div className="w-full">
                   <div class="relative">
@@ -237,9 +247,9 @@ export default function ModalAddWorkedtime({
             <div className="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b ">
               <button
                 onClick={() => {
-                  handleAddWorkedtime();
+                  handleAddNoshow();
                   setSelectedEmployees([]);
-                  setSelectValue("");
+                  setNoshowData({});
                 }}
                 disabled={selectedEmployees.length == 0 ? true : false}
                 type="button"
@@ -255,7 +265,7 @@ export default function ModalAddWorkedtime({
                 onClick={() => {
                   setIsShowModal(false);
                   setSelectedEmployees([]);
-                  setSelectValue("");
+                  setNoshowData({});
                 }}
                 type="button"
                 className="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-indigo-600 focus:z-10 focus:ring-4 focus:ring-gray-100 transition duration-200"

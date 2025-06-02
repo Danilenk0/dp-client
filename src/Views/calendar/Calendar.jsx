@@ -22,12 +22,15 @@ export default function Calendar() {
   const [departments, setDepartments] = useState([]);
   const [noshows, setNoshows] = useState([]);
   const [causes, setCauses] = useState([]);
-  
-  //для получения данных с сервера
+  const [searchString, setSearchString] = useState("");
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null); 
+  const [filteredWorkedtimes, setFilteredWorkedtimes] = useState([]);
+  const [filteredNoshows, setFilteredNoshows] = useState([]);
+
   useEffect(() => {
     feactData();
   }, []);
-  //для генерации массива чисел календаря
   useEffect(() => {
     const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
     const startDay = new Date(selectedYear, selectedMonth - 1, 1).getDay();
@@ -35,8 +38,45 @@ export default function Calendar() {
 
     const monthArray = generateMonthArray(adjustedStartDay, daysInMonth);
     setCalendarNumbers(monthArray);
-  }, [selectedMonth, selectedYear]);;
+  }, [selectedMonth, selectedYear]);
+  useEffect(() => {
+    if (searchString.length === 0) {
+      setFilteredEmployees([]);
+    } else {
+      setFilteredEmployees(
+        employees.filter((item) => {
+          const matchesSearch =
+            item.firstName.toLowerCase().includes(searchString.toLowerCase()) ||
+            item.lastName.toLowerCase().includes(searchString.toLowerCase()) ||
+            item.surname.toLowerCase().includes(searchString.toLowerCase()) ||
+            item.position_id.name.toLowerCase().includes(searchString.toLowerCase()) ||
+            item.department_id.name.toLowerCase().includes(searchString.toLowerCase());
+  
+          const isNotSelected = selectedEmployee ? !selectedEmployee.includes(item._id) : true;
+  
+          return matchesSearch && isNotSelected;
+        })
+      );
+    }
+  }, [searchString, employees, selectedEmployee]);
+  useEffect(() => {
+    if (selectedEmployee) {
 
+      const filteredNoshows = noshows.filter(
+        (item) => item.employee_id._id === selectedEmployee
+      );
+      const filteredWorkedtimes = workedtimes.filter(
+        (item) => item.employee_id._id === selectedEmployee
+      );
+
+      setFilteredNoshows(filteredNoshows);
+      setFilteredWorkedtimes(filteredWorkedtimes);
+    }
+  }, [selectedEmployee,workedtimes, noshows]);
+
+  async function fetchData() {
+    // Ваш код для получения данных
+  }
   async function feactData() {
     try {
       const responseWorkedtimes = await axios.get(
@@ -59,12 +99,9 @@ export default function Calendar() {
       setDepartments(responseDepartments.data);
 
       const responseNoshows = await axios.get("http://localhost:5050/noshow");
-      setNoshows(responseNoshows.data)
-      console.log(responseNoshows.data);
-
-      const responseCauses = await axios.get('http://localhost:5050/cause');
+      setNoshows(responseNoshows.data);
+      const responseCauses = await axios.get("http://localhost:5050/cause");
       setCauses(responseCauses.data);
-
     } catch (error) {
       setAlertData({
         type: "error",
@@ -200,8 +237,39 @@ export default function Calendar() {
       });
     }
   }
+  function handleSelectEmployee(id) {
+    setSearchString("");
 
-  
+    setSelectedEmployee(id);
+  }
+  function isWorkedtime(day) {
+    if (selectedEmployee) {
+      const filteredDays = filteredWorkedtimes.filter((item) => {
+        const itemDate = new Date(item.date);
+        const selectedDate = new Date(
+          Date.UTC(selectedYear, selectedMonth - 1, day)
+        );
+        return itemDate.getTime() === selectedDate.getTime();
+      });
+      return filteredDays;
+    }
+    return []; 
+  }
+
+  function isNoshow(day) {
+    if (selectedEmployee) {
+      const filteredDays = filteredNoshows.filter((item) => {
+        const itemDate = new Date(item.date);
+        const selectedDate = new Date(
+          Date.UTC(selectedYear, selectedMonth - 1, day)
+        );
+        return itemDate.getTime() === selectedDate.getTime();
+      });
+      return filteredDays;
+    }
+    return []; 
+  }
+
   return (
     <>
       <Alert alertData={alertData} setAlertData={setAlertData} />
@@ -223,14 +291,86 @@ export default function Calendar() {
         ></ControlCalendarBlock>
         <div className="lg:flex lg:h-full w-full lg:flex-col mt-1">
           <header className="flex items-center justify-between border-b border-gray-200 px-6 py-4 lg:flex-none">
-            <h1 className="text-base font-semibold leading-6 text-gray-900">
-              <time dateTime="2022-01">
+            <h1 className="text-base font-semibold leading-6 text-gray-900 me-4">
+              <time dateTime="2022-01" className="whitespace-nowrap">
                 {new Date(2023, selectedMonth - 1).toLocaleString("ru-RU", {
                   month: "long",
                 })}{" "}
                 {selectedYear}
               </time>
             </h1>
+            {selectedEmployee ? (
+              employees.map((item) =>
+                selectedEmployee == item._id ? (
+                  <div
+                    key={item._id}
+                    className="ps-2 pb-1 pt-1 flex-start rounded-md border border-gray-200 font-semibold shadow-sm  hover:bg-gray-100 transition duration-200 w-full"
+                  >
+                    <div className="flex justify-between items-center">
+                      <p className="text-gray-900 text-[15px]">{`${item.lastName} ${item.firstName} ${item.surname}`}</p>
+                      <button
+                        onClick={() => setSelectedEmployee(null)}
+                        className="text-gray-400 bg-transparent hover:bg-gray-100 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center transition duration-200"
+                      >
+                        <i className="bx bx-x text-[20px]"></i>
+                      </button>
+                    </div>
+                  </div>
+                ) : null
+              )
+            ) : (
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                  <i className="bx bx-search"></i>
+                </div>
+                <input
+                  onChange={(e) => setSearchString(e.target.value)}
+                  value={searchString}
+                  type="text"
+                  className="block w-full p-2.5 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-gray-500 focus:border-gray-500 focus:outline-none"
+                  placeholder="Поиск сотрудника"
+                />
+                <div
+                  className={`absolute w-120 z-100 rounded-md border border-gray-200 bg-white p-2.5 top-11 shadow-sm max-h-[250px] ${
+                    filteredEmployees.length === 0
+                      ? "hidden"
+                      : "overflow-y-scroll"
+                  }`}
+                >
+                  <ul>
+                    {filteredEmployees.map((item) => (
+                      <li
+                        key={item._id}
+                        onClick={() => handleSelectEmployee(item._id)}
+                        className="p-2.5 rounded-md border border-gray-200 font-semibold shadow-sm mb-2.5 hover:bg-gray-100 transition duration-200"
+                      >
+                        <div className="flex justify-between">
+                          <div>
+                            <p className="text-gray-900">
+                              {item.lastName +
+                                " " +
+                                item.firstName +
+                                " " +
+                                item.surname}
+                            </p>
+                          </div>
+                        </div>
+                        <hr className="h-px my-1 bg-gray-200 border-0" />
+                        <div className="flex flex-col">
+                          <p className="text-gray-500 text-[10px]">
+                            Отдел: {item.department_id.name}
+                          </p>
+                          <p className="text-gray-500 text-[10px]">
+                            Должность: {item.position_id.name}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center">
               <div className="ml-6 mr-6 h-6 w-px bg-gray-300"></div>
               <div className="relative flex items-center rounded-md bg-white shadow-sm md:items-stretch">
@@ -303,6 +443,13 @@ export default function Calendar() {
             <div className="flex bg-gray-200 text-xs leading-6 text-gray-700 lg:flex-auto">
               <div className="hidden w-full lg:grid lg:grid-cols-7 lg:grid-rows-6 lg:gap-px">
                 {calendarNumbers.map((item, index) => {
+                  const currentDate = new Date(
+                    selectedYear,
+                    selectedMonth - 1,
+                    item
+                  );
+                  const dayOfWeek = currentDate.getDay(); 
+
                   return (
                     <div
                       onClick={() =>
@@ -319,8 +466,8 @@ export default function Calendar() {
                           item >= selectedDay.start &&
                           item <= selectedDay.end &&
                           item !== 0)
-                          ? "border-indigo-600 border bg-indigo-50" 
-                          : "border-transparent" 
+                          ? "border-indigo-600 border bg-indigo-50"
+                          : "border-transparent"
                       }`}
                     >
                       <time
@@ -335,6 +482,42 @@ export default function Calendar() {
                       >
                         {item === 0 ? "" : item}
                       </time>
+
+                      {item !== 0 &&
+                      selectedEmployee &&
+                      (dayOfWeek === 0 || dayOfWeek === 6) ? (
+                        <div className="absolute bottom-3 left-4 flex items-center gap-1">
+                          <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                          <p className="font-semibold">вых.</p>
+                        </div>
+                      ) : null}
+
+                      {item !== 0 &&
+                      selectedEmployee &&
+                      isWorkedtime(item)?.length > 0 ? (
+                        <div className="absolute bottom-3 left-4 flex items-center gap-1">
+                          <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                          <p className="font-semibold ">
+                            {isWorkedtime(item)[0].time}{" "}
+                            {isWorkedtime(item)[0].time === 1
+                              ? "час"
+                              : isWorkedtime(item)[0].time > 1 &&
+                                isWorkedtime(item)[0].time < 5
+                              ? "часа"
+                              : "часов"}
+                          </p>
+                        </div>
+                      ) : null}
+                      {item !== 0 &&
+                      selectedEmployee &&
+                      isNoshow(item)?.length > 0 ? (
+                        <div className="absolute bottom-3 left-4 flex items-center gap-1">
+                          <div className="min-h-3 min-w-3 rounded-full bg-blue-500"></div>
+                          <p className="font-semibold leading-tight">
+                            {isNoshow(item)[0].cause_id.name}
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}

@@ -17,7 +17,7 @@ export default function WorkedtimeOutputList({
     <>
       {allEmpty ? (
         <div
-          className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+          className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50"
           role="alert"
         >
           <span className="font-medium">Нет данных!</span> Нет данных для
@@ -29,9 +29,9 @@ export default function WorkedtimeOutputList({
             <div key={key}>
               {value.length === 0 ? null : (
                 <div className="flex items-center justify-center gap-2">
-                  <hr className="h-[3px] bg-gray-200 border-0 dark:bg-gray-700 w-[35%] rounded-md" />
+                  <hr className="h-[3px] bg-gray-200 border-0  w-[35%] rounded-md" />
                   <p className="text-gray-300 font-semibold">{key}</p>
-                  <hr className="h-[3px] bg-gray-200 border-0 dark:bg-gray-700 w-[35%] rounded-md" />
+                  <hr className="h-[3px] bg-gray-200 border-0 w-[35%] rounded-md" />
                 </div>
               )}
               {value.map((item, index) => (
