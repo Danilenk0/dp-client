@@ -356,28 +356,31 @@ export default function ControlCalendarBlok({
         validationErrors={validationErrors}
         setValidationErrors={setValidationErrors}
       />
-      {markerShowBlock == "noshow" ? ( <ModalAddNoshow
-        isShowModal={isShowAddWorkedtimeModal}
-        setIsShowModal={setIsShowAddWorkedtimeModal}
-        employees={employees}
-        selectedDay={selectedDay}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        setAlertData={setAlertData}
-        feactData={feactData}
-        causes={causes}
-      />) : ( <ModalAddWorkedtime
-        isShowModal={isShowAddWorkedtimeModal}
-        setIsShowModal={setIsShowAddWorkedtimeModal}
-        employees={employees}
-        selectedDay={selectedDay}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        setAlertData={setAlertData}
-        feactData={feactData}
-      />)}
-     
-     
+      {markerShowBlock == "noshow" ? (
+        <ModalAddNoshow
+          isShowModal={isShowAddWorkedtimeModal}
+          setIsShowModal={setIsShowAddWorkedtimeModal}
+          employees={employees}
+          selectedDay={selectedDay}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          setAlertData={setAlertData}
+          feactData={feactData}
+          causes={causes}
+        />
+      ) : (
+        <ModalAddWorkedtime
+          isShowModal={isShowAddWorkedtimeModal}
+          setIsShowModal={setIsShowAddWorkedtimeModal}
+          employees={employees}
+          selectedDay={selectedDay}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          setAlertData={setAlertData}
+          feactData={feactData}
+        />
+      )}
+
       <section
         className={`min-w-150 rounded-xs border-gray-100 border bg-gray-100 p-1 flex flex-col transition max-h-162 pb-10 ${
           selectedDay.start ? "" : "hidden"
@@ -477,7 +480,7 @@ export default function ControlCalendarBlok({
                 )}
               </div>
               <button
-                onClick={() => setIsShowAddWorkedtimeModal(true)}
+                onClick={() => selectedMonth > new Date().getMonth() + 1 ? setAlertData({type:'error',message:"Ошибка добавления данных. Невозможно добавить данные на будущее время"}): setIsShowAddWorkedtimeModal(true)}
                 type="button"
                 className="rounded-md bg-indigo-600 px-3 py-1 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition duration-200"
               >

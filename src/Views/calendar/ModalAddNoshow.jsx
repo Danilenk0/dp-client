@@ -136,6 +136,7 @@ export default function ModalAddWorkedtime({
                     onChange={(e) => handleSelectChange(e)}
                     className="bg-gray-50 border border-gray-300  text-gray-900 text-sm rounded-lg focus:ring-gray-500 focus:border-gray-500 block w-auto p-2.5 outline-gray-200"
                   >
+                    <option selected>Выберите причину неявки</option>
                     {causes.map((cause) => (
                       <option value={cause._id}>{cause.name}</option>
                     ))}
