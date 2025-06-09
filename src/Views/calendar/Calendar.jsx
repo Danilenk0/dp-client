@@ -2,6 +2,7 @@ import Navbar from "../../Components/Navbar.jsx";
 import Alert from "../../Components/Alert.jsx";
 import ControlCalendarBlock from "./ControlCalendarBlock.jsx";
 import { useState, useEffect } from "react";
+import ExcelJS from "exceljs";
 import axios from "axios";
 
 export default function Calendar() {
@@ -27,6 +28,8 @@ export default function Calendar() {
   const [selectedEmployee, setSelectedEmployee] = useState(null); 
   const [filteredWorkedtimes, setFilteredWorkedtimes] = useState([]);
   const [filteredNoshows, setFilteredNoshows] = useState([]);
+  const [workedtimesThisMonth, setWorkedtimesThisMonth] = useState([]);
+  const [noshowsThisMonth, setNoshowsThisMonth] = useState([]);
 
   useEffect(() => {
     feactData();
@@ -72,11 +75,18 @@ export default function Calendar() {
       setFilteredNoshows(filteredNoshows);
       setFilteredWorkedtimes(filteredWorkedtimes);
     }
-  }, [selectedEmployee,workedtimes, noshows]);
+  }, [selectedEmployee, workedtimes, noshows]);
+  useEffect(() => {
+    const filteredWorkedtimes = workedtimes.filter(
+      (item) => new Date(item.date).getMonth() + 1 === selectedMonth
+    );
+    setWorkedtimesThisMonth(filteredWorkedtimes)
 
-  async function fetchData() {
-    // Ваш код для получения данных
-  }
+    const filteredNoshows = noshows.filter(
+      (item) => new Date(item.date).getMonth() + 1 === selectedMonth
+    );
+    setNoshowsThisMonth(filteredNoshows);
+  }, [selectedMonth, workedtimes, noshows]);
   async function feactData() {
     try {
       const responseWorkedtimes = await axios.get(
@@ -255,7 +265,6 @@ export default function Calendar() {
     }
     return []; 
   }
-
   function isNoshow(day) {
     if (selectedEmployee) {
       const filteredDays = filteredNoshows.filter((item) => {
@@ -268,6 +277,210 @@ export default function Calendar() {
       return filteredDays;
     }
     return []; 
+  }
+  function generateRowExcel(employee) {
+    const workedtimesThisEmployee = workedtimesThisMonth.filter(
+      (item) => item.employee_id._id === employee._id
+    );
+    const noshowsThisEmployee = noshowsThisMonth.filter(
+      (item) => item.employee_id._id === employee._id
+    );
+    const dayMonth = Array(31).fill("");
+
+    for (let i = 0; i < 31; i++) {
+      const currentDate = new Date(
+        Date.UTC(selectedYear, selectedMonth - 1, i + 1)
+      );
+      const workedtimeThisEmployee = workedtimesThisEmployee.find((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate.getTime() === currentDate.getTime();
+      });
+
+      if (workedtimeThisEmployee) {
+        dayMonth[i] = workedtimeThisEmployee.time;
+      }
+    }
+
+    for (let i = 0; i < 31; i++) {
+      const currentDate = new Date(
+        Date.UTC(selectedYear, selectedMonth - 1, i + 1)
+      );
+      const noshowThisEmployee = noshowsThisEmployee.find((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate.getTime() === currentDate.getTime();
+      });
+
+      if (noshowThisEmployee) {
+        dayMonth[i] = noshowThisEmployee.cause_id.name.slice(0, 3) + ".";
+      }
+    }
+    return [
+      employee.lastName +
+        " " +
+        employee.firstName.charAt(0) +
+        "." +
+        employee.surname.charAt(0),
+      employee.position_id.name,
+      ...dayMonth,
+      workedtimesThisEmployee.length,
+      noshowsThisEmployee.filter((item) => item.cause_id.name === "Отпуск")
+        .length,
+      noshowsThisEmployee.filter(
+        (item) => item.cause_id.name === "Декретн. отп."
+      ).length,
+      noshowsThisEmployee.filter((item) => item.cause_id.name === "Болезнь")
+        .length,
+      noshowsThisEmployee.filter((item) => item.cause_id.name === "Учеба")
+        .length,
+      noshowsThisEmployee.filter(
+        (item) => item.cause_id.name === "Прочие неявки"
+      ).length,
+      workedtimesThisEmployee.reduce((acc, item) => acc + (item.time || 0), 0), 
+    ];
+  }
+  async function createExcelFile() {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("My Sheet");
+
+    sheet.mergeCells("A1:A2");
+    sheet.getCell("A1").value = "№";
+    sheet.getColumn(1).width = sheet.getCell("A1").value.length + 2;
+    sheet.getCell("A1").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+
+    sheet.mergeCells("B1:B2");
+    sheet.getCell("B1").value = "Ф.И.О";
+    sheet.getColumn(2).width = 18;
+    sheet.getCell("B1").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    sheet.mergeCells("C1:C2");
+    sheet.getCell("C1").value = "Должность";
+    sheet.getColumn(3).width = 25;
+    sheet.getCell("C1").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    sheet.mergeCells(`D1:AH1`);
+    sheet.getCell("D1").value = "Числа Месяца";
+    sheet.getCell("D1").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+
+    const startColumn = 4;
+    const endColumn = 34;
+    for (let i = 1; i <= 31; i++) {
+      sheet.getCell(2, startColumn + (i - 1)).value = i;
+    }
+
+    for (let col = startColumn; col <= endColumn; col++) {
+      sheet.getColumn(col).width = 5;
+      sheet.getColumn(col).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+    }
+
+    for (let row = 1; row <= 2; row++) {
+      for (let col = 1; col <= 41; col++) {
+        sheet.getCell(row, col).border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      }
+    }
+
+    sheet.mergeCells("AI1:AI2");
+    sheet.getCell("AI1").value = "Дни явок";
+    sheet.getCell("AI1").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+    sheet.getColumn(35).width = 6;
+
+    sheet.mergeCells("AJ1:AN1");
+    sheet.getCell("AJ1").value = "Дни неявок";
+    sheet.getCell("AJ1").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+    sheet.getColumn(36).width = 6;
+
+    const absenceTitles = ["Отпуск", "Декрет", "Болезнь", "Учеба", "Прочие"];
+    absenceTitles.forEach((title, index) => {
+      const cell = sheet.getCell(2, 36 + index);
+      cell.value = title;
+      cell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        textRotation: 90,
+      };
+      sheet.getColumn(37 + index).width = 6;
+    });
+
+    for (let row = 1; row <= 2; row++) {
+      for (let col = 35; col <= 41; col++) {
+        sheet.getCell(row, col).border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      }
+    }
+
+    sheet.mergeCells("AO1:AO2");
+    sheet.getCell("AO1").value = "Всего отработано часов";
+    sheet.getCell("AO1").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+    sheet.getColumn(41).width = 6;
+
+    // Добавление данных сотрудников
+    employees.map((item, index) => {
+      const row = generateRowExcel(item);
+      const newRow = sheet.addRow([index + 1, ...row]);
+
+      // Границы для каждой ячейки в новой строке
+      newRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    });
+
+    // Сохранение файла
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "example.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    setAlertData({
+      type: "success",
+      message: "Табель рабочего времени успешно сформирован!",
+    });
   }
 
   return (
@@ -412,7 +625,16 @@ export default function Calendar() {
                     <i class="bx bx-chevron-right text-[20px]"></i>
                   </button>
                 </div>
-                <div className="ml-6 h-6 w-px bg-gray-300"></div>
+                <div className="mx-6 h-6 w-px bg-gray-300"></div>
+                <div className="relative flex items-center rounded-md bg-white shadow-sm md:items-stretch">
+                  <button
+                    onClick={createExcelFile}
+                    type="button"
+                    className="flex h-9 w-12 items-center justify-center rounded-md border border-gray-300 pl-1 text-gray-400 hover:text-gray-500 focus:relative md:w-9 md:pl-0 md:hover:bg-gray-50 transition duration-200"
+                  >
+                    <i class="bx bxs-file-export text-[20px]"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </header>
@@ -448,7 +670,7 @@ export default function Calendar() {
                     selectedMonth - 1,
                     item
                   );
-                  const dayOfWeek = currentDate.getDay(); 
+                  const dayOfWeek = currentDate.getDay();
 
                   return (
                     <div

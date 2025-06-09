@@ -12,6 +12,9 @@ export default function Add() {
     firstName: "",
     lastName: "",
     surname: "",
+    address: "",
+    email: "",
+    phone:"+375 (",
     department_id: "",
     position_id: "",
   });
@@ -43,14 +46,39 @@ export default function Add() {
       });
     }
   }
+  function formatPhone(value) {
+    let digits = value.replace(/\D/g, "");
+    if (digits.startsWith("375")) digits = digits.slice(3);
+    if (digits.length === 0) return "";
+
+    let formatted = "+375";
+    if (digits.length > 0) formatted += " (";
+    if (digits.length >= 1) formatted += digits.substring(0, 2);
+    if (digits.length >= 3) formatted += ") " + digits.substring(2, 5);
+    else if (digits.length > 2) formatted += ") " + digits.substring(2);
+    if (digits.length >= 6) formatted += "-" + digits.substring(5, 7);
+    else if (digits.length > 5) formatted += "-" + digits.substring(5);
+    if (digits.length >= 8) formatted += "-" + digits.substring(7, 9);
+    else if (digits.length > 7) formatted += "-" + digits.substring(7);
+
+    return formatted;
+  }
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setEmployee((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "phone") {
+      setEmployee((prev) => ({
+        ...prev,
+        [name]: formatPhone(value),
+      }));
+    } else {
+      setEmployee((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   }
+
 
   async function handleSubmitForm(e) {
     e.preventDefault();
@@ -188,26 +216,27 @@ export default function Add() {
             </label>
           </div>
           <div className="relative z-0 w-full mb-5 group">
-            <div className="relative">
-              <span className="absolute start-0 bottom-1 text-gray-500">
-                <i className="bx bx-phone flex text-[20px]"></i>
-              </span>
-              <input
-                type="text"
-                id="phone"
-                name="phone"
-                value={employee.phone}
-                onChange={handleChange}
-                className="block py-2.5 ps-6 pe-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-                placeholder=" "
-              />
-              <label
-                for="phone"
-                className="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3  -z-10 origin-[0] peer-placeholder-shown:start-6 peer-focus:start-0 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto"
-              >
-                Мобильный телефон
-              </label>
+            <div className="relative z-0 w-full mb-5 group">
+              <div className="relative">
+                <span className="absolute start-0 bottom-1 text-gray-500">
+                  <i className="bx bx-phone flex text-[20px]"></i>
+                </span>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={employee.phone}
+                  onChange={handleChange}
+                  className="block py-2.5 ps-6 pe-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                  maxLength={19}
+                />
+                <label
+                  htmlFor="phone"
+                  className="absolute text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:start-6 peer-focus:start-0 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto"
+                >
+                  Мобильный телефон
+                </label>
+              </div>
             </div>
           </div>
           <div className="flex items-center justify-between">
@@ -253,10 +282,10 @@ export default function Add() {
               Отправить
             </button>
             <Link
-              to='/employee'
+              to="/employee"
               className="text-gray-900 bg-gray-200 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center mt-4 transition duration-200"
             >
-              Отмена
+              Назад
             </Link>
           </div>
         </form>

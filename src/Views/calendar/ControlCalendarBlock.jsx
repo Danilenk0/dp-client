@@ -445,6 +445,9 @@ export default function ControlCalendarBlok({
             </button>
           </div>
           <div className="bg-white p-2.5 shadow-sm  flex-grow rounded-md overflow-y-scroll h-147">
+            <div className="flex items-center justify-center  w-full shadow-sm rounded-sm mb-2 pb-1 font-semibold text-gray-900">
+              {markerShowBlock == "noshow" ? "Неявки" : "Рабочее время"}
+            </div>
             <header className="p-2.5 rounded-md border border-gray-200 shadow-sm mb-2.5 flex gap-2.5 flex justify-between relative">
               <div className="flex gap-2.5 items-center  relative">
                 <FilterMenu
@@ -480,9 +483,18 @@ export default function ControlCalendarBlok({
                 )}
               </div>
               <button
-                onClick={() => selectedMonth > new Date().getMonth() + 1 ? setAlertData({type:'error',message:"Ошибка добавления данных. Невозможно добавить данные на будущее время"}): setIsShowAddWorkedtimeModal(true)}
+                onClick={() =>
+                  selectedMonth > new Date().getMonth() + 1
+                    ? setAlertData({
+                        type: "error",
+                        message:
+                          "Ошибка добавления данных. Невозможно добавить данные на будущее время",
+                      })
+                    : setIsShowAddWorkedtimeModal(true)
+                }
                 type="button"
-                className="rounded-md bg-indigo-600 px-3 py-1 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 transition duration-200"
+                className="rounded-md bg-indigo-600 px-3 py-1 shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+                 focus-visible:outline-indigo-500 transition duration-200"
               >
                 <i class="bx bx-plus text-white"></i>
               </button>

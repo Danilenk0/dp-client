@@ -78,6 +78,10 @@ export default function ModalAddWorkedtime({
         type: "success",
         message: response.data.message,
       });
+      setNoshowData({
+        type: "",
+        cause_id: "",
+      });
     } catch (error) {
       if (error.response && error.response.status === 400) {
         setValidationErrors(error.response.data.errors);

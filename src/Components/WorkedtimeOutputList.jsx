@@ -105,14 +105,18 @@ export default function WorkedtimeOutputList({
                       ) : (
                         <>
                           <button
-                            onClick={() => setItemMenuId(item._id)}
+                            onClick={() => {
+                              setItemMenuId(
+                                itemMenuId === item._id ? undefined : item._id
+                              );
+                            }}
                             className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center"
                           >
                             <i className="bx bx-dots-horizontal-rounded text-[20px]"></i>
                           </button>
                           <div
                             className={`${
-                              itemMenuId === item._id ? "" : "hidden"
+                              itemMenuId == item._id ? "" : "hidden"
                             } absolute end-10 top-0 z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow`}
                           >
                             <ul className="py-1 text-sm text-gray-700">

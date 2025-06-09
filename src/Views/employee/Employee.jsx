@@ -42,18 +42,22 @@ function Employee() {
     if (searchString) {
       filteredData = filteredData.filter(
         (item) =>
-          item.firstName.toLowerCase().includes(searchString) ||
-          item.lastName.toLowerCase().includes(searchString) ||
-          item.surname.toLowerCase().includes(searchString) ||
-          item.position_id.name.toLowerCase().includes(searchString) ||
-          item.department_id.name.toLowerCase().includes(searchString)
+          item.firstName.toLowerCase().includes(searchString.toLowerCase()) ||
+          item.lastName.toLowerCase().includes(searchString.toLowerCase()) ||
+          item.surname.toLowerCase().includes(searchString.toLowerCase()) ||
+          item.position_id.name
+            .toLowerCase()
+            .includes(searchString.toLowerCase()) ||
+          item.department_id.name
+            .toLowerCase()
+            .includes(searchString.toLowerCase())
       );
     }
 
     setOutputData(filteredData.slice(page * 10 - 10, page * 10));
   }, [page, data, searchString, selectedDepartments, selectedPositions]);
 
- async function feachData(){
+  async function feachData() {
     try {
       const responseEmployee = await axios.get(
         "http://localhost:5050/employee"
@@ -63,7 +67,7 @@ function Employee() {
       );
       const responsePositions = await axios.get(
         "http://localhost:5050/position"
-      )
+      );
       setDepartments(responseDepartment.data);
       setPositions(responsePositions.data);
       setData(responseEmployee.data);
@@ -75,7 +79,7 @@ function Employee() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   async function handleDeleteData(id) {
     try {
@@ -112,7 +116,7 @@ function Employee() {
           return [...prevSelected, id];
         }
       });
-    } else if (marker == 'Должность') {
+    } else if (marker == "Должность") {
       setSelectedPositions((prevSelected) => {
         if (prevSelected.includes(id)) {
           return prevSelected.filter((posId) => posId !== id);
@@ -121,7 +125,6 @@ function Employee() {
         }
       });
     }
-   
   }
   function handleShowItemMenu(id) {
     if (itemMenyId === id) {
@@ -199,7 +202,7 @@ function Employee() {
                   <>
                     <div className="overflow-x-auto">
                       <div className="overflow-x-auto min-h-119">
-                        <table className="w-full text-sm text-left text-gray-500">
+                        <table className="w-full text-sm text-left text-gray-500 relative">
                           <thead className="text-xs text-gray-800 uppercase bg-gray-100">
                             <tr>
                               <th scope="col" className="px-4 py-3">
@@ -229,82 +232,92 @@ function Employee() {
                               <th scope="col" className="px-4 py-3"></th>
                             </tr>
                           </thead>
-                          <tbody>
-                            {outputData.map((item, index) => {
-                              return (
-                                <tr key={item._id} className="border-b">
-                                  <th
-                                    scope="row"
-                                    className="px-4 py-2 font-medium text-gray-700 whitespace-nowrap"
-                                  >
-                                    {item.lastName}
-                                  </th>
-                                  <th className="px-4 py-2 font-medium text-gray-700 whitespace-nowrap">
-                                    {item.firstName}
-                                  </th>
-                                  <th className="px-4py-2 font-medium text-gray-700 whitespace-nowrap">
-                                    {item.surname}
-                                  </th>
-                                  <td className="px-4 py-2 text-gray-700 text-[10px]">
-                                    {item.address}
-                                  </td>
-                                  <td className="px-4 py-2 text-gray-700 text-[10px]">
-                                    {item.email}
-                                  </td>
-                                  <td className="px-4 py-2 text-gray-700 text-[10px]">
-                                    {item.phone}
-                                  </td>
-                                  <td className="px-4 py-2 text-[10px]">
-                                    {item.position_id.name}
-                                  </td>
-                                  <td className="px-4 py-2 text-[10px]">
-                                    {item.department_id.name}
-                                  </td>
-                                  <td className="px-4 py-2 flex items-center justify-end">
-                                    <button
-                                      onClick={() =>
-                                        handleShowItemMenu(item._id)
-                                      }
-                                      className="inline-flex items-center p-2.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none"
-                                      type="button"
+                          {outputData.length < 1 ? (
+                            <div
+                              class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 absolute top-50 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
+                              role="alert"
+                            >
+                              <span class="font-medium">Нет данных!</span>{" "}
+                             Нет данных подходящих под условия вашей фильтрации.
+                            </div>
+                          ) : (
+                            <tbody>
+                              {outputData.map((item, index) => {
+                                return (
+                                  <tr key={item._id} className="border-b">
+                                    <th
+                                      scope="row"
+                                      className="px-4 py-2 font-medium text-gray-700 whitespace-nowrap"
                                     >
-                                      <i class="bx bx-dots-horizontal-rounded text-[20px]"></i>
-                                    </button>
-                                    <div
-                                      className={`${
-                                        itemMenyId == item._id ? "" : "hidden"
-                                      } absolute end-15 z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow`}
-                                    >
-                                      <ul className="py-1 text-sm text-gray-700">
-                                        <li>
-                                          <Link
-                                            to={`/employee/edit/${item._id}`}
-                                            className="block py-2 px-4 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
-                                          >
-                                            <i class="bx bx-edit-alt"></i>
-                                            <p> Редактировать</p>
-                                          </Link>
-                                        </li>
-                                        <li>
-                                          {" "}
-                                          <a
-                                            onClick={() =>
-                                              handleDeleteData(item._id)
-                                            }
-                                            href="#"
-                                            className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
-                                          >
-                                            <i class="bx bx-folder-minus"></i>
-                                            <p>Удалить</p>
-                                          </a>
-                                        </li>
-                                      </ul>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
+                                      {item.lastName}
+                                    </th>
+                                    <th className="px-4 py-2 font-medium text-gray-700 whitespace-nowrap">
+                                      {item.firstName}
+                                    </th>
+                                    <th className="px-4py-2 font-medium text-gray-700 whitespace-nowrap">
+                                      {item.surname}
+                                    </th>
+                                    <td className="px-4 py-2 text-gray-700 text-[10px]">
+                                      {item.address}
+                                    </td>
+                                    <td className="px-4 py-2 text-gray-700 text-[10px]">
+                                      {item.email}
+                                    </td>
+                                    <td className="px-4 py-2 text-gray-700 text-[10px]">
+                                      {item.phone}
+                                    </td>
+                                    <td className="px-4 py-2 text-[10px]">
+                                      {item.position_id.name}
+                                    </td>
+                                    <td className="px-4 py-2 text-[10px]">
+                                      {item.department_id.name}
+                                    </td>
+                                    <td className="px-4 py-2 flex items-center justify-end">
+                                      <button
+                                        onClick={() =>
+                                          handleShowItemMenu(item._id)
+                                        }
+                                        className="inline-flex items-center p-2.5 text-sm font-medium text-center text-gray-500 hover:text-gray-800 rounded-lg focus:outline-none"
+                                        type="button"
+                                      >
+                                        <i class="bx bx-dots-horizontal-rounded text-[20px]"></i>
+                                      </button>
+                                      <div
+                                        className={`${
+                                          itemMenyId == item._id ? "" : "hidden"
+                                        } absolute end-15 z-10 w-44 bg-white rounded divide-y divide-gray-100 shadow`}
+                                      >
+                                        <ul className="py-1 text-sm text-gray-700">
+                                          <li>
+                                            <Link
+                                              to={`/employee/edit/${item._id}`}
+                                              className="block py-2 px-4 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
+                                            >
+                                              <i class="bx bx-edit-alt"></i>
+                                              <p> Редактировать</p>
+                                            </Link>
+                                          </li>
+                                          <li>
+                                            {" "}
+                                            <a
+                                              onClick={() =>
+                                                handleDeleteData(item._id)
+                                              }
+                                              href="#"
+                                              className="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition duration-200"
+                                            >
+                                              <i class="bx bx-folder-minus"></i>
+                                              <p>Удалить</p>
+                                            </a>
+                                          </li>
+                                        </ul>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          )}
                         </table>
                       </div>
                     </div>

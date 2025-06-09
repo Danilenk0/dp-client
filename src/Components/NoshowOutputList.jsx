@@ -21,7 +21,8 @@ export default function NoshowOutputList({
           className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 "
           role="alert"
         >
-          <span className="font-medium">Нет данных!</span> Нет данных для отображения, рекомендуем добавить данные на эти даты
+          <span className="font-medium">Нет данных!</span> Нет данных для
+          отображения, рекомендуем добавить данные на эти даты
         </div>
       ) : (
         <ul>
@@ -72,7 +73,11 @@ export default function NoshowOutputList({
                       ) : (
                         <>
                           <button
-                            onClick={() => setItemMenuId(item._id)}
+                            onClick={() => {
+                              setItemMenuId(
+                                itemMenuId === item._id ? undefined : item._id
+                              );
+                            }}
                             className="p-1 text-gray-400 rounded md hover:shadow-sm hover:bg-gray-100 hover:text-black transition duration-200 flex items-center"
                           >
                             <i className="bx bx-dots-horizontal-rounded text-[20px]"></i>
