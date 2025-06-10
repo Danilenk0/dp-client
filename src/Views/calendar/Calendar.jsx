@@ -30,6 +30,7 @@ export default function Calendar() {
   const [filteredNoshows, setFilteredNoshows] = useState([]);
   const [workedtimesThisMonth, setWorkedtimesThisMonth] = useState([]);
   const [noshowsThisMonth, setNoshowsThisMonth] = useState([]);
+  const [isShowExelMenu, setIsShowExcelMenu] = useState(true);
 
   useEffect(() => {
     feactData();
@@ -338,7 +339,7 @@ export default function Calendar() {
       workedtimesThisEmployee.reduce((acc, item) => acc + (item.time || 0), 0), 
     ];
   }
-  async function createExcelFile() {
+  async function createExcelFile(departmentId) {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("My Sheet");
 
@@ -449,12 +450,10 @@ export default function Calendar() {
     };
     sheet.getColumn(41).width = 6;
 
-    // Добавление данных сотрудников
-    employees.map((item, index) => {
+    employees.filter((item)=>item.department_id._id == departmentId).map((item, index) => {
       const row = generateRowExcel(item);
       const newRow = sheet.addRow([index + 1, ...row]);
 
-      // Границы для каждой ячейки в новой строке
       newRow.eachCell((cell) => {
         cell.border = {
           top: { style: "thin" },
@@ -465,21 +464,22 @@ export default function Calendar() {
       });
     });
 
-    // Сохранение файла
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "example.xlsx";
+    a.download = `${
+      departments.find((item) => item._id == departmentId).name
+    }.xlsx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
 
     setAlertData({
       type: "success",
-      message: "Табель рабочего времени успешно сформирован!",
+      message: `Табель рабочего времени успешно сформирован для ${departments.find((item)=>item._id == departmentId).name} `,
     });
   }
 
@@ -626,14 +626,42 @@ export default function Calendar() {
                   </button>
                 </div>
                 <div className="mx-6 h-6 w-px bg-gray-300"></div>
-                <div className="relative flex items-center rounded-md bg-white shadow-sm md:items-stretch">
+                <div className="relative flex items-center rounded-md bg-white shadow-sm md:items-stretch relative">
                   <button
-                    onClick={createExcelFile}
+                    onClick={() => {
+                      setIsShowExcelMenu(!isShowExelMenu);
+                    }}
                     type="button"
                     className="flex h-9 w-12 items-center justify-center rounded-md border border-gray-300 pl-1 text-gray-400 hover:text-gray-500 focus:relative md:w-9 md:pl-0 md:hover:bg-gray-50 transition duration-200"
                   >
                     <i class="bx bxs-file-export text-[20px]"></i>
                   </button>
+                  <div
+                    id="filterDropdown"
+                    className={`absolute z-20 top-10 right-0 w-60 h-70 p-3 bg-white rounded-lg shadow-md overflow-y-scroll ${
+                      isShowExelMenu ? "" : "hidden"
+                    }`}
+                  >
+                    <ul
+                      className=" text-sm"
+                      aria-labelledby="filterDropdownButton"
+                    >
+                      {departments.map((item) => (
+                        <li
+                          onClick={() => createExcelFile(item._id)}
+                          className="flex items-center hover:bg-gray-100 p-2.5 rounded-md transition duration-200"
+                          key={item._id}
+                        >
+                          <label
+                            htmlFor={`department-${item._id}`}
+                            className="ml-2 text-[12px] font-medium text-gray-900 wrap"
+                          >
+                            {item.name}
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
